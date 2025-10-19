@@ -1,4 +1,4 @@
-"""Search algorithms (TODO-only scaffold).
+"""Search algorithms (TODO).
 
 Planned pure functions (no pygame, no I/O):
 - bfs(start, goal, neighbors) -> path

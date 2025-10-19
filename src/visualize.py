@@ -1,4 +1,4 @@
-"""Visualization (TODO-only scaffold).
+"""Visualization (TODO).
 
 Planned behavior (optional):
 - Simple pygame window rendering grid cells, seen area, agent, start, goal.

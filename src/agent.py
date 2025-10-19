@@ -1,4 +1,4 @@
-"""Online agent (TODO-only scaffold).
+"""Online agent (TODO).
 
 Planned responsibilities:
 - Maintain internal knowledge: seen cells, known free cells.

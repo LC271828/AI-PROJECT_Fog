@@ -4,3 +4,7 @@ __pycache__/
 .env
 .pytest_cache/
 .DS_Store
+experiments/**/data/
+experiments/**/.ipynb_checkpoints/
+experiments/**/__pycache__/
+

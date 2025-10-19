@@ -1,4 +1,4 @@
-"""CLI entry (TODO-only scaffold).
+"""CLI entry (TODO).
 
 Planned behavior:
 - Parse CLI flags: --map, --algo [bfs|dfs|ucs|astar], --fog, --gui, --config.

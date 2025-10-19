@@ -10,6 +10,10 @@ Context and goals:
 What’s included:
 - Directory structure, placeholder modules, and TODOs only.
 - Minimal docs and map example for reference.
+ - Experiments sandbox: `experiments/` with per-teammate folders (keep production code in `src/`, tests in `tests/`).
+
+Quick start for experiments:
+- See `experiments/_template/quickstart.py` and the usage guide in `experiments/README.md`.
 
 Next steps (high level):
 1) Implement src/grid.py (CSV load, neighbors, visible)

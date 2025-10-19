@@ -1,4 +1,4 @@
-"""Grid module (TODO-only scaffold).
+"""Grid module (TODO).
 
 Planned responsibilities:
 - Load grid from CSV supporting symbols: 0 (free), 1 (wall), S (start), G (goal).
