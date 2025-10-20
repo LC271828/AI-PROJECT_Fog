@@ -12,7 +12,8 @@ Roles
 - Leo → Integrator / Release Manager
 
 Branch workflow
-- main (final) → dev (integration) → feat/... (feature branches)
+- main (final, protected)
+- dev (shared integration)
 
 Module contracts
 

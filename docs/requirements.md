@@ -5,7 +5,7 @@ Functional requirements:
 - Online agent that re-plans as new cells are revealed; reaches goal on demo map
 - Optional Pygame visualisation (fog mask, visible walls, path)
 
-Non-functional:
+- Non-functional:
 - Simple CLI
 - Unit tests for algorithms and fog/agent
-- Branch workflow: main → dev → feat/...
+- Branch workflow: main (final) and dev (integration)

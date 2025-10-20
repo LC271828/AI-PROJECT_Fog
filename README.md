@@ -29,7 +29,7 @@ Structure
 - Experiments: `experiments/` per teammate (do not import from experiments inside src/tests)
 
 Branch workflow
-- `main` (final) → `dev` (integration) → `feat/...` (feature branches)
+- `main` (final, protected) and `dev` (shared integration)
 
 Team roles
 - Gibran → Search + Metrics
