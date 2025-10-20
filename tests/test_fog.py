@@ -1,7 +1,7 @@
 """TODO tests for fog-of-war and online agent.
 
 Planned cases:
-- visible() includes center and respects Manhattan radius and bounds.
+- visible() includes the agent cell and respects N-steps visibility using up/down/left/right only, and stays in bounds.
 - Agent explores and eventually reaches goal on demo map.
 """
 
