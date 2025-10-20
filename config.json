@@ -1,6 +1,6 @@
 {
   "map": "maps/demo.csv",
   "algo": "astar",
-  "fog_radius": 2,
+  "fog_radius": 1,
   "gui": false
 }

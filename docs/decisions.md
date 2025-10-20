@@ -9,4 +9,4 @@ Project-wide conventions:
 - Fog: radius 1; walls visible when adjacent and block reveal beyond; no re-fogging
 - Heuristic: Manhattan for A*
 - Re-planning: Agent re-runs search as visibility expands
-- Branch workflow: main (final) → dev (integration) → feat/... (feature)
+- Branch workflow: main (final) and dev (integration)
