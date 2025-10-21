@@ -29,8 +29,8 @@ from typing import List, Tuple
 class Grid:
     map: Path      # Store .csv file path
     grid: list[list[str]] = field(default_factory=list)     # 2D array initialized with empty list
-    start: tuple[int, int] = (0, 0)
-    goal:  tuple[int, int] = (0, 0)
+    start: tuple[int, int] = (0, 0)     # Start tuple intialized
+    goal:  tuple[int, int] = (0, 0)     # Goal tuple initialized
     #visible: list[list[bool]] # same shape as grid, all False initially
     height: int = 1
     width: int = 1
@@ -52,6 +52,10 @@ class Grid:
             S_count = 0
             G_count = 0
 
+            # Intialize 2D array
+            # Note: I added new columns and rows as walls in the boundary
+            # Judging from the demo.csv file, I am assuming mazes will not
+            # be fully enclosed by a wall, so I added them
             self.grid = [['1']]
 
             # Open reader object
