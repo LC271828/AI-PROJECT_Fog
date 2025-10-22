@@ -38,3 +38,19 @@ Notes:
 ## Why remove create_issues.ps1?
 The previous script hardcoded the issue set and could easily create duplicates on rerun.
 The new config-driven script is idempotent and easier to maintain.
+
+## Team handles mapping
+Use these GitHub usernames in `issues.json` (and anywhere you assign reviewers):
+
+- Leo Carter → `LC271828`
+- Asthar → `Raffolklore`
+- Muhammad Gibran Basyir → `cliverosfield`
+- M. Ahsan Wiryawan → `Shazaw`
+- Thomz → `Troggz`
+- Bayu Putra Ibana → `hush1a`
+
+Notes:
+- If a collaborator hasn’t accepted the invite, assignment will fall back to `LC271828`.
+- After they accept, rerun:
+  - `powershell -ExecutionPolicy Bypass -File .\scripts\create_issues_from_config.ps1 -SkipExisting`
+  to update assignees/labels/comments without creating duplicates.
