@@ -5,7 +5,7 @@ param(
 
 # Load config (PowerShell 5.1 friendly)
 if (!(Test-Path $ConfigPath)) { throw "Config file not found: $ConfigPath" }
-$config = Get-Content -Raw -Path $ConfigPath | ConvertFrom-Json -Depth 64
+$config = Get-Content -Raw -Path $ConfigPath | ConvertFrom-Json
 
 $Repo = $config.repo
 if (-not $Repo) { throw "Missing 'repo' in config" }

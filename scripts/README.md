@@ -71,7 +71,7 @@ Use these GitHub usernames in `issues.json` (and anywhere you assign reviewers):
 
 - Leo Carter → `LC271828`
 - Asthar → `Raffolklore`
-- Muhammad Gibran Basyir → `cliverosfield`
+- Muhammad Gibran Basyir → `cliverosf1eld`
 - M. Ahsan Wiryawan → `Shazaw`
 - Thomz → `Troggz`
 - Bayu Putra Ibana → `hush1a`
