@@ -34,9 +34,9 @@ Branch workflow
 Team roles
 - Gibran → Search + Metrics
 - Asthar → Grid + Fog + Maps
-- B → Agent + Heuristics
-- C → Visualisation + Demo
-- D → Docs + Slides
+- Ahsan → Agent + Heuristics
+- Thomz → Visualisation + Demo
+- Bayu → Docs + Slides
 - Leo → Integrator / Release Manager
 
 What’s included now
