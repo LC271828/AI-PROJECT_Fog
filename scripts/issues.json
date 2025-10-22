@@ -1,0 +1,91 @@
+{
+  "repo": "LC271828/ai-mini-project-fog-maze",
+  "fallbackAssignee": "LC271828",
+  "labels": [
+    { "name": "core",          "color": "5319e7", "description": "Core implementation" },
+    { "name": "algorithms",    "color": "1d76db", "description": "Search algorithms" },
+    { "name": "agent",         "color": "0e8a16", "description": "Agent logic" },
+    { "name": "cli",           "color": "0052cc", "description": "Command-line interface" },
+    { "name": "visualization", "color": "fbca04", "description": "Pygame visualization" },
+    { "name": "tests",         "color": "e11d21", "description": "Unit tests" },
+    { "name": "docs",          "color": "d4c5f9", "description": "Documentation" },
+    { "name": "design",        "color": "b60205", "description": "Design/API alignment" },
+    { "name": "infra",         "color": "c2e0c6", "description": "Infra/Repo config" },
+    { "name": "data",          "color": "bfdadc", "description": "Maps/data" },
+    { "name": "process",       "color": "fef2c0", "description": "Process/Contributing" }
+  ],
+  "issues": [
+    {
+      "title": "Implement Grid CSV loader + fog-of-war",
+      "labels": ["enhancement", "core"],
+      "assignees": ["Raffolklore", "LC271828"],
+      "body": "Implement Grid in src/grid.py: \n- from_csv(path), in_bounds, passable, neighbors4, tile_at, is_visible\n- Fog: reveal_from(pos) radius=1 (U/D/L/R), walls reveal and block beyond; no re-fogging\n- get_visible_neighbors(pos), visible_tiles()\nCSV rules: rectangular; symbols {0,1,S,G}; exactly one S and one G; raise ValueError.\n\nAcceptance criteria:\n- Loading maps/demo.csv yields correct grid/start/goal; visible mask starts all False\n- reveal_from(start) reveals start and adjacent cells per spec; visibility persists (no re-fog)\n- No auto-added boundary walls; coordinates match CSV\n\nTasks:\n- [ ] Implement data structure and API\n- [ ] Input validation with helpful error messages\n- [ ] Minimal doctests or comments with asserts"
+    },
+    {
+      "title": "Implement search algorithms (BFS/DFS/UCS/A*)",
+      "labels": ["enhancement", "algorithms", "core"],
+      "assignees": ["LC271828"],
+      "body": "Implement pure functions in src/search.py: \n- bfs(grid, start, goal) -> (path, nodes_expanded)\n- dfs(grid, start, goal) -> (path, nodes_expanded)\n- ucs(grid, start, goal) -> (path, nodes_expanded)\n- astar(grid, start, goal, h=manhattan) -> (path, nodes_expanded)\n- ALGORITHMS = {\\\"bfs\\\": bfs, \\\"dfs\\\": dfs, \\\"ucs\\\": ucs, \\\"astar\\\": astar}\n\nAcceptance criteria:\n- Works on a simple open grid and maps/demo.csv\n- A* path length equals BFS/UCS on unit-cost grid\n\nTasks:\n- [ ] Implement algorithms (no pygame/no I/O)\n- [ ] Shared reconstruct helper\n- [ ] Docstrings clarify nodes_expanded definition"
+    },
+    {
+      "title": "Implement OnlineAgent with re-planning",
+      "labels": ["enhancement", "agent", "core"],
+      "assignees": ["LC271828"],
+      "body": "Implement OnlineAgent in src/agent.py:\n- Perceive (reveal), Plan (search.ALGORITHMS[algo]), Act (move one step)\n- Re-plan as visibility expands; reach goal on demo map\n- Metrics dataclass: steps, nodes_expanded, replans, runtime\n- Exploration when no known path: simple frontier-based strategy\n\nAcceptance criteria:\n- Agent reaches G on maps/demo.csv\n- run() returns Metrics with the fields above\n\nTasks:\n- [ ] Define Metrics dataclass\n- [ ] Implement step() and run()\n- [ ] Add simple frontier exploration"
+    },
+    {
+      "title": "CLI wiring (src/main.py)",
+      "labels": ["enhancement", "cli"],
+      "assignees": ["LC271828"],
+      "body": "Implement CLI in src/main.py:\n- Flags: --map, --algo [bfs|dfs|ucs|astar], --gui, --config\n- Headless prints metrics; --gui invokes visualizer if available\n\nAcceptance criteria:\n- Running --map maps/demo.csv --algo astar prints cost, nodes expanded, runtime\n\nTasks:\n- [ ] Argument parsing\n- [ ] Wire Grid + Agent + (optional) Visualize\n- [ ] Friendly errors and exit codes"
+    },
+    {
+      "title": "Visualization (Pygame)",
+      "labels": ["enhancement", "visualization"],
+      "assignees": ["Troggz"],
+      "body": "Implement src/visualize.py:\n- Render grid, fog mask, agent, current path\n- Step agent per frame; allow quit\n\nAcceptance criteria:\n- Works with --gui; fog correctly shows unknown vs visible vs walls\n\nTasks:\n- [ ] Rendering loop and colors\n- [ ] Integrate with OnlineAgent step()"
+    },
+    {
+      "title": "Unit tests: search algorithms",
+      "labels": ["tests"],
+      "assignees": ["LC271828"],
+      "body": "Add tests in tests/test_search.py:\n- BFS/DFS find path on simple grid\n- UCS equals BFS length on unit-cost maps\n- A* finds optimal path with Manhattan heuristic\n\nAcceptance criteria:\n- Tests pass locally and in CI (when added)\n\nTasks:\n- [ ] Tiny fixture grids\n- [ ] Tests per algorithm"
+    },
+    {
+      "title": "Unit tests: fog and agent",
+      "labels": ["tests"],
+      "assignees": ["Raffolklore"],
+      "body": "Add tests in tests/test_fog.py:\n- reveal_from radius=1; walls reveal and block beyond; no re-fogging\n- Agent explores and reaches goal on maps/demo.csv\n\nAcceptance criteria:\n- Tests pass with implemented Grid and OnlineAgent\n\nTasks:\n- [ ] Fog visibility tests\n- [ ] Agent reachability test"
+    },
+    {
+      "title": "Align search API across code and docs",
+      "labels": ["design", "docs"],
+      "assignees": ["LC271828"],
+      "body": "Ensure a single search signature across code and docs:\n- Keep grid-first signature (matches quickstart and TEAM_API.md) or update consistently\n- Update README.md, TEAM_API.md, quickstart accordingly\n\nAcceptance criteria:\n- All docs and examples use the same signatures\n\nTasks:\n- [ ] Confirm final signature\n- [ ] Update docs and examples"
+    },
+    {
+      "title": "Documentation sync and slides",
+      "labels": ["docs"],
+      "assignees": ["LC271828"],
+      "body": "Keep docs in sync with implementation:\n- Update README.md, docs/PEAS.md, docs/requirements.md, TEAM_API.md\n- Add a simple \"How to run\" and metrics definitions\n\nAcceptance criteria:\n- Docs reflect actual behavior and CLI options\n\nTasks:\n- [ ] Update docs post-merge of Grid/Search/Agent\n- [ ] Add 1-2 images/diagrams if helpful"
+    },
+    {
+      "title": "CODEOWNERS setup",
+      "labels": ["infra"],
+      "assignees": ["LC271828"],
+      "body": "Add .github/CODEOWNERS with module ownership:\n- Core modules owned by respective leads + integrator\n- experiments/* owned per person\n\nAcceptance criteria:\n- PRs auto-request appropriate reviewers\n\nTasks:\n- [ ] Fill with real usernames\n- [ ] Commit to dev and verify on a test PR"
+    },
+    {
+      "title": "Experiments hygiene and promotion process",
+      "labels": ["process", "docs"],
+      "assignees": ["LC271828"],
+      "body": "Improve CONTRIBUTING.md and experiments/README.md:\n- No imports from experiments/ into src/ or tests/\n- Promotion process: how to graduate code from experiments to src via PR\n\nAcceptance criteria:\n- Clear, short checklist in docs\n\nTasks:\n- [ ] Add promotion checklist\n- [ ] Cross-link from README"
+    },
+    {
+      "title": "Map curation and additional demos",
+      "labels": ["data", "enhancement"],
+      "assignees": ["Raffolklore"],
+      "body": "Add more CSV maps with varied patterns:\n- Narrow corridors, cul-de-sacs, simple open map\n\nAcceptance criteria:\n- New maps validate with Grid.from_csv\n\nTasks:\n- [ ] Create maps/demo2.csv and maps/demo3.csv\n- [ ] Update maps/README.md with notes"
+    }
+  ]
+}
