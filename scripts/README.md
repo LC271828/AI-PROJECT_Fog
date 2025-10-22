@@ -1,12 +1,29 @@
-# Issue automation scripts
+# Scripts
 
-This folder contains a config-driven workflow for creating and maintaining GitHub Issues.
+This folder contains:
+- Dev environment helpers
+- A config-driven workflow for creating and maintaining GitHub Issues
 
 ## Files
 - `create_issues_from_config.ps1` — Reads a JSON config and creates/updates issues idempotently.
 - `issues.json` — Repository slug, labels to ensure exist, and the list of issues to create/update.
 
-## Usage (PowerShell)
+## Dev environment (PowerShell)
+
+From the repo root on Windows:
+
+```powershell
+# Create a virtual environment and install base dev deps (pytest)
+powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
+
+# Include GUI dependency (pygame) if you plan to work on visualization
+powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -WithGUI
+
+# Run tests (uses .venv if present)
+powershell -ExecutionPolicy Bypass -File .\scripts\test.ps1
+```
+
+## Issue automation (PowerShell)
 
 From the repo root on Windows:
 

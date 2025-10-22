@@ -2,6 +2,20 @@
 
 Simulation of an intelligent agent navigating a partially observable maze with fog-of-war.
 
+## TL;DR
+
+- Where to code:
+	- Grid/Fog → `src/grid.py`
+	- Search → `src/search.py`
+	- Agent → `src/agent.py`
+- Setup once (Windows):
+	- `powershell -ExecutionPolicy Bypass -File .\\scripts\\setup.ps1`
+- Run tests anytime:
+	- `powershell -ExecutionPolicy Bypass -File .\\scripts\\test.ps1`
+- Push to `dev` when tests pass.
+- Optional GUI deps (pygame) if working on visualization:
+	- `powershell -ExecutionPolicy Bypass -File .\\scripts\\setup.ps1 -WithGUI`
+
 Context
 - Course: UGM Artificial Intelligence
 - Team: 6 members (see roles below)
@@ -27,6 +41,14 @@ Structure
 - Maps: `maps/`
 - Docs: `docs/`
 - Experiments: `experiments/` per teammate (do not import from experiments inside src/tests)
+
+Dev quickstart (Windows)
+- Create virtual environment and install dev deps:
+	- `powershell -ExecutionPolicy Bypass -File .\\scripts\\setup.ps1`
+- Run tests:
+	- `powershell -ExecutionPolicy Bypass -File .\\scripts\\test.ps1`
+- Optional: include GUI dependency (pygame) if working on visualization:
+	- `powershell -ExecutionPolicy Bypass -File .\\scripts\\setup.ps1 -WithGUI`
 
 Branch workflow
 - `main` (final, protected) and `dev` (shared integration)
