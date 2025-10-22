@@ -16,6 +16,11 @@ Simulation of an intelligent agent navigating a partially observable maze with f
 - Optional GUI deps (pygame) if working on visualization:
 	- `powershell -ExecutionPolicy Bypass -File .\\scripts\\setup.ps1 -WithGUI`
 
+Quick commit and push to dev (Windows):
+- `git add .`
+- `git commit -m "work in progress"`
+- `git push origin HEAD:dev`
+
 Context
 - Course: UGM Artificial Intelligence
 - Team: 6 members (see roles below)
@@ -51,7 +56,9 @@ Dev quickstart (Windows)
 	- `powershell -ExecutionPolicy Bypass -File .\\scripts\\setup.ps1 -WithGUI`
 
 Branch workflow
-- `main` (final, protected) and `dev` (shared integration)
+- Work on `dev` by default (commit/push directly to `dev`).
+- If a specific bug/feature is risky or large, create a short-lived branch from `dev`, then open a PR into `dev`.
+- Only the coordinator (Leo) merges `dev` → `main` (main is protected).
 
 Team roles
 - Gibran → Search + Metrics

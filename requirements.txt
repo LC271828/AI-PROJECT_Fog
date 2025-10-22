@@ -1,8 +1,6 @@
-# TODO: add runtime/testing dependencies when implementations are added.
-# Suggested: pytest (for tests), pygame (optional GUI).
-# Example (uncomment to pin):
-# pytest==8.3.3
-# pygame==2.6.1
+# Minimal dependencies; GUI is optional
+# Tests
+pytest==8.3.3
 
-# Core runtime deps for Fog Maze Game
-pygame==2.5.2
+# GUI (optional): install via scripts/setup.ps1 -WithGUI
+# pygame==2.6.1

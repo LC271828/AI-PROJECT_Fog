@@ -23,6 +23,16 @@ powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -WithGUI
 powershell -ExecutionPolicy Bypass -File .\scripts\test.ps1
 ```
 
+## Simple Git helpers (PowerShell)
+
+```powershell
+# Pull latest changes into local 'dev'
+powershell -ExecutionPolicy Bypass -File .\scripts\pull.ps1
+
+# Commit all changes and push current HEAD to remote 'dev'
+powershell -ExecutionPolicy Bypass -File .\scripts\commit.ps1 -Message "your message"
+```
+
 ## Issue automation (PowerShell)
 
 From the repo root on Windows:
