@@ -34,6 +34,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Guardrail — forbid experiments imports in src/tests
+        run: |
+          python scripts/guard_no_experiments_import.py
+
       - name: Run tests
         run: |
           python -m pytest -q
