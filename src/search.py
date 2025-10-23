@@ -1,28 +1,119 @@
-"""Search algorithms (TODO).
+from heapq import heappush, heappop
+from collections import deque
 
-Canonical API: neighbor-function based (no pygame, no I/O)
-- bfs_neighbors(start, goal, neighbors_fn) -> path
-- dfs_neighbors(start, goal, neighbors_fn) -> path
-- ucs_neighbors(start, goal, neighbors_fn) -> path
-- astar_neighbors(start, goal, neighbors_fn, h=manhattan) -> path
+def reconstruct_path(came_from, start, goal):
+    path = []
+    current = goal
+    while current != start:
+        path.append(current)
+        current = came_from.get(current)
+        if current is None:
+            return []
+    path.append(start)
+    path.reverse()
+    return path
 
-Contracts:
-- Inputs:
-    - start, goal: coordinates as tuples (row, col)
-    - neighbors_fn: Callable[[tuple[int,int]], list[tuple[int,int]]]
-- Output: list of coordinates from start to goal (inclusive). Empty list if no path exists.
 
-Notes:
-- Keep algorithms side-effect free.
-- If start == goal: return [start]. If start/goal is not passable under neighbors_fn, return [].
-- Provide `ALGORITHMS_NEIGHBORS = {"bfs": bfs_neighbors, "dfs": dfs_neighbors, "ucs": ucs_neighbors, "astar": astar_neighbors}`.
+def bfs(grid, start, goal):
+    """Breadth-First Search."""
+    queue = deque([start])
+    came_from = {}
+    visited = {start}
+    nodes_expanded = 0
 
-With-stats variants (optional):
-- Return `SearchResult` with fields: path, nodes_expanded, runtime, cost.
+    while queue:
+        current = queue.popleft()
+        nodes_expanded += 1
 
-Next steps:
-- Implement algorithms, a `reconstruct(came_from, start, goal)` helper, and Manhattan heuristic.
-"""
+        if current == goal:
+            return reconstruct_path(came_from, start, goal), nodes_expanded
 
-# TODO: implement bfs_neighbors, dfs_neighbors, ucs_neighbors, astar_neighbors,
-# ALGORITHMS_NEIGHBORS mapping, and optional with-stats variants.
+        for neighbor in grid.neighbors(current):
+            if neighbor not in visited:
+                visited.add(neighbor)
+                came_from[neighbor] = current
+                queue.append(neighbor)
+
+    return [], nodes_expanded
+
+
+def dfs(grid, start, goal):
+    """Depth-First Search."""
+    stack = [start]
+    came_from = {}
+    visited = {start}
+    nodes_expanded = 0
+
+    while stack:
+        current = stack.pop()
+        nodes_expanded += 1
+
+        if current == goal:
+            return reconstruct_path(came_from, start, goal), nodes_expanded
+
+        for neighbor in grid.neighbors(current):
+            if neighbor not in visited:
+                visited.add(neighbor)
+                came_from[neighbor] = current
+                stack.append(neighbor)
+
+    return [], nodes_expanded
+
+
+def ucs(grid, start, goal):
+    """Uniform Cost Search."""
+    frontier = []
+    heappush(frontier, (0, start))
+    came_from = {}
+    cost_so_far = {start: 0}
+    nodes_expanded = 0
+
+    while frontier:
+        cost, current = heappop(frontier)
+        nodes_expanded += 1
+
+        if current == goal:
+            return reconstruct_path(came_from, start, goal), nodes_expanded
+
+        for neighbor in grid.neighbors(current):
+            new_cost = cost_so_far[current] + grid.cost(current, neighbor)
+            if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
+                cost_so_far[neighbor] = new_cost
+                heappush(frontier, (new_cost, neighbor))
+                came_from[neighbor] = current
+
+    return [], nodes_expanded
+
+
+def astar(grid, start, goal, h=lambda a, b: abs(a[0]-b[0]) + abs(a[1]-b[1])):
+    """A* Search with Manhattan heuristic."""
+    frontier = []
+    heappush(frontier, (0, start))
+    came_from = {}
+    g_score = {start: 0}
+    nodes_expanded = 0
+
+    while frontier:
+        _, current = heappop(frontier)
+        nodes_expanded += 1
+
+        if current == goal:
+            return reconstruct_path(came_from, start, goal), nodes_expanded
+
+        for neighbor in grid.neighbors(current):
+            tentative_g = g_score[current] + grid.cost(current, neighbor)
+            if neighbor not in g_score or tentative_g < g_score[neighbor]:
+                g_score[neighbor] = tentative_g
+                f_score = tentative_g + h(neighbor, goal)
+                heappush(frontier, (f_score, neighbor))
+                came_from[neighbor] = current
+
+    return [], nodes_expanded
+
+
+ALGORITHMS = {
+    "bfs": bfs,
+    "dfs": dfs,
+    "ucs": ucs,
+    "astar": astar
+}
