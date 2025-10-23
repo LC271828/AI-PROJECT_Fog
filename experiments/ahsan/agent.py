@@ -16,23 +16,41 @@ an agent-provided neighbor function based on the agent's known free tiles.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Iterable, List, Tuple, Set
+from typing import Callable, Iterable, List, Tuple, Set, Union
 from pathlib import Path
 import time
 
-# Import Asthar's experiment Grid reader (used as the authoritative map for now)
-from experiments.asthar.grid import Grid as Grid
-from experiments.ahsan.search import bfs, astar, Coord, Path
+# helper: ensure coords are canonical tuples
+from typing import Sequence
+
+
+def normalize_coord(pos: Sequence[int]) -> Tuple[int, int]:
+    if isinstance(pos, tuple):
+        if len(pos) != 2:
+            raise ValueError("coord must be length 2")
+        return pos
+    if not isinstance(pos, (list, tuple)):
+        raise ValueError("coord must be a sequence of two ints")
+    if len(pos) != 2:
+        raise ValueError("coord must be length 2")
+    r, c = pos
+    return (int(r), int(c))
+
+from experiments.ahsan.search import bfs, astar, Coord
 
 Coord = Tuple[int, int]
 
 
 @dataclass
 class Metrics:
+    # TEAM_API fields + extras
     start: Coord
     goal: Coord
     steps: int = 0
+    nodes_expanded: int = 0
     replans: int = 0
+    runtime: float = 0.0
+    cost: int = 0
     reached_goal: bool = False
     path_taken: List[Coord] = None
 
@@ -42,14 +60,33 @@ class Metrics:
 
 
 class OnlineAgent:
-    def __init__(self, grid_path: Path, full_map: bool = True, search_algo: Callable = astar):
-        self.impl = Grid(map=grid_path)
+    def __init__(self, grid, full_map: bool = True, search_algo: Callable = None):
+        """
+        grid: a Grid instance (constructed externally). The Grid must implement
+        the TEAM_API: attributes `start`, `goal`, `height`, `width`, and methods
+        `reveal_from(pos)` and `get_visible_neighbors(pos)`.
+
+        The agent no longer attempts to construct a Grid from a path — callers
+        must pass a ready Grid instance. This keeps the agent robust and avoids
+        import/constructor fragility during transitions.
+        """
+        # Don't accept raw path-like values here; require a Grid instance.
+        if isinstance(grid, Path):
+            raise TypeError("OnlineAgent now requires a Grid instance; construct a Grid (e.g. src.grid.Grid.from_csv(path)) and pass it in.")
+        self.impl = grid
+        # default to with-stats A* if available
+        from experiments.ahsan.search import ALGORITHMS_WITH_STATS
+
+        if search_algo is None:
+            # prefer astar_with_stats
+            self.search = ALGORITHMS_WITH_STATS.get("astar")
+        else:
+            self.search = search_algo
         # normalize start/goal to tuples
-        self.start: Coord = tuple(self.impl.start)
-        self.goal: Coord = tuple(self.impl.goal)
+        self.start: Coord = normalize_coord(tuple(self.impl.start))
+        self.goal: Coord = normalize_coord(tuple(self.impl.goal))
         self.current: Coord = self.start
         self.full_map = full_map
-        self.search = search_algo
 
         # known tiles maintained by agent
         self.known_passable: Set[Coord] = set()
@@ -70,7 +107,18 @@ class OnlineAgent:
                         self.known_passable.add(pos)
         else:
             # reveal starting cell and its neighbors (simulate fog radius=1)
-            self._reveal_from(self.start)
+            # prefer Grid.reveal_from if available
+            if hasattr(self.impl, "reveal_from"):
+                newly = self.impl.reveal_from(self.start)
+                for p in newly:
+                    p = normalize_coord(p)
+                    tile = self._tile_at(p)
+                    if tile == '1':
+                        self.known_walls.add(p)
+                    else:
+                        self.known_passable.add(p)
+            else:
+                self._reveal_from(self.start)
 
         self.metrics = Metrics(start=self.start, goal=self.goal)
         self.current_plan: List[Coord] = []
@@ -114,7 +162,21 @@ class OnlineAgent:
 
     # --- planning/execution ---
     def plan_to(self, target: Coord) -> List[Coord]:
-        path = self.search(self.current, target, lambda p: self.known_neighbors(p))
+        # prefer impl.get_visible_neighbors when available (TEAM_API)
+        if hasattr(self.impl, "get_visible_neighbors"):
+            neighbor_fn = lambda p: self.impl.get_visible_neighbors(p)
+        else:
+            neighbor_fn = lambda p: self.known_neighbors(p)
+
+        res = self.search(self.current, target, neighbor_fn)
+        # Search may return either a Path or a SearchResult-like object with .path
+        if hasattr(res, "path"):
+            path = res.path
+            self.metrics.nodes_expanded += getattr(res, "nodes_expanded", 0)
+            self.metrics.runtime += getattr(res, "runtime", 0.0)
+            self.metrics.cost = getattr(res, "cost", self.metrics.cost)
+        else:
+            path = res
         return path
 
     def choose_frontier(self) -> Coord | None:
