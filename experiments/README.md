@@ -40,6 +40,7 @@ Suggested layout inside your folder
 
 Examples
 - See `experiments/_template/quickstart.py` for a tiny runner showing how to call production code safely.
+- Official search API uses a neighbors function (see TEAM_API.md). Plan on visible neighbors under fog.
 
 ## How to use quickstart
 

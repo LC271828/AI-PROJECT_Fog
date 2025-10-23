@@ -1,24 +1,28 @@
 """Search algorithms (TODO).
 
-Planned pure functions (no pygame, no I/O), grid-first API:
-- bfs(grid, start, goal) -> path
-- dfs(grid, start, goal) -> path
-- ucs(grid, start, goal) -> path
-- astar(grid, start, goal, h=manhattan) -> path
+Canonical API: neighbor-function based (no pygame, no I/O)
+- bfs_neighbors(start, goal, neighbors_fn) -> path
+- dfs_neighbors(start, goal, neighbors_fn) -> path
+- ucs_neighbors(start, goal, neighbors_fn) -> path
+- astar_neighbors(start, goal, neighbors_fn, h=manhattan) -> path
 
 Contracts:
 - Inputs:
-	- grid: a Grid-like object exposing `neighbors4(r,c)` and `passable(r,c)` (see TEAM_API.md)
-	- start, goal: coordinates as tuples (row, col)
+    - start, goal: coordinates as tuples (row, col)
+    - neighbors_fn: Callable[[tuple[int,int]], list[tuple[int,int]]]
 - Output: list of coordinates from start to goal (inclusive). Empty list if no path exists.
 
 Notes:
-- Keep algorithms side-effect free; do not mutate `grid`.
-- Provide `ALGORITHMS = {"bfs": bfs, "dfs": dfs, "ucs": ucs, "astar": astar}`.
+- Keep algorithms side-effect free.
+- If start == goal: return [start]. If start/goal is not passable under neighbors_fn, return [].
+- Provide `ALGORITHMS_NEIGHBORS = {"bfs": bfs_neighbors, "dfs": dfs_neighbors, "ucs": ucs_neighbors, "astar": astar_neighbors}`.
+
+With-stats variants (optional):
+- Return `SearchResult` with fields: path, nodes_expanded, runtime, cost.
 
 Next steps:
-- Implement each algorithm and a small `reconstruct(came_from, start, goal)` helper.
-- Use Manhattan distance for A*.
+- Implement algorithms, a `reconstruct(came_from, start, goal)` helper, and Manhattan heuristic.
 """
 
-# TODO: implement bfs, dfs, ucs, astar and ALGORITHMS mapping.
+# TODO: implement bfs_neighbors, dfs_neighbors, ucs_neighbors, astar_neighbors,
+# ALGORITHMS_NEIGHBORS mapping, and optional with-stats variants.

@@ -30,8 +30,8 @@ Context
 - Start and goal are known; map layout is initially hidden by fog
 
 Algorithms
-- Classical search: DFS, BFS, UCS, A*
-- Heuristic: A* uses Manhattan distance
+- Canonical API: neighbor-function search (plan on what you can see)
+- Functions: DFS, BFS, UCS, A* (Manhattan)
 - Agent re-plans when new cells are revealed, updating its known map and re-running search as needed
 
 PEAS (high-level)
@@ -41,7 +41,7 @@ PEAS (high-level)
 - Sensors: current cell + adjacent visibility (fog radius 1)
 
 Structure
-- Production: `src/` (grid.py: fog/visibility; search.py: search logic; agent.py: planning/re-planning; visualize.py: Pygame view; main.py: CLI)
+- Production: `src/` (grid.py: fog/visibility; search.py: neighbor-function search; agent.py: planning/re-planning; visualize.py: Pygame view; main.py: CLI)
 - Tests: `tests/`
 - Maps: `maps/`
 - Docs: `docs/`
@@ -82,10 +82,25 @@ What’s included now
 Quick start for experiments
 - See `experiments/_template/quickstart.py` and the usage guide in `experiments/README.md`.
 
+Tiny example (planning under fog)
+```python
+from src.grid import Grid
+from src.search import astar_neighbors
+
+g = Grid.from_csv("maps/demo.csv")
+g.reveal_from(g.start)
+
+def visible_neighbors(rc):
+	return g.get_visible_neighbors(rc)
+
+path = astar_neighbors(g.start, g.goal, visible_neighbors)
+print(len(path))  # None or steps
+```
+
 Next steps (high level)
-1) Implement `src/grid.py` (CSV load, neighbors, visibility)
-2) Implement `src/search.py` (DFS/BFS/UCS/A* + ALGORITHMS)
-3) Implement `src/agent.py` (OnlineAgent, re-planning, Metrics)
+1) Implement `src/grid.py` (CSV load, neighbors, visibility — no artificial borders)
+2) Implement `src/search.py` (DFS/BFS/UCS/A* via neighbor-function APIs + optional with-stats)
+3) Implement `src/agent.py` (OnlineAgent, re-planning, Metrics; build neighbors_fn from `grid.get_visible_neighbors`)
 4) Implement `src/main.py` (CLI) and optionally `src/visualize.py` (Pygame)
 5) Write tests in `tests/` after modules are ready
 
