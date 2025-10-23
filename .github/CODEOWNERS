@@ -2,3 +2,4 @@
 # See: https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 # Assign all files in the repo to this owner.
 * @LC271828
+src/**   @LC271828

@@ -1,0 +1,282 @@
+"""Experimental OnlineAgent for development in experiments/ahsan.
+
+This agent is intentionally kept in experiments so it can iterate quickly
+without touching `src/`.
+
+Usage: run this module or import OnlineAgent in experiments for manual tests.
+It supports two modes:
+  - full_map=True: agent has complete knowledge of the map at start (fast testing)
+  - full_map=False: agent uses a simple reveal_from implementation that looks up
+    neighbors from the Asthar grid and reveals only immediate adjacent tiles
+    (simulates fog radius=1). This is enough to implement online replanning.
+
+The agent uses `experiments/ahsan/search.py` functions (bfs/astar) which accept
+an agent-provided neighbor function based on the agent's known free tiles.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Callable, Iterable, List, Tuple, Set, Union
+from pathlib import Path
+import time
+
+# helper: ensure coords are canonical tuples
+from typing import Sequence
+
+
+def normalize_coord(pos: Sequence[int]) -> Tuple[int, int]:
+    if isinstance(pos, tuple):
+        if len(pos) != 2:
+            raise ValueError("coord must be length 2")
+        return pos
+    if not isinstance(pos, (list, tuple)):
+        raise ValueError("coord must be a sequence of two ints")
+    if len(pos) != 2:
+        raise ValueError("coord must be length 2")
+    r, c = pos
+    return (int(r), int(c))
+
+from experiments.ahsan.search import bfs, astar, Coord
+
+Coord = Tuple[int, int]
+
+
+@dataclass
+class Metrics:
+    # TEAM_API fields + extras
+    start: Coord
+    goal: Coord
+    steps: int = 0
+    nodes_expanded: int = 0
+    replans: int = 0
+    runtime: float = 0.0
+    cost: int = 0
+    reached_goal: bool = False
+    path_taken: List[Coord] = None
+
+    def __post_init__(self):
+        if self.path_taken is None:
+            self.path_taken = [self.start]
+
+
+class OnlineAgent:
+    def __init__(self, grid, full_map: bool = True, search_algo: Callable = None):
+        """
+        grid: a Grid instance (constructed externally). The Grid must implement
+        the TEAM_API: attributes `start`, `goal`, `height`, `width`, and methods
+        `reveal_from(pos)` and `get_visible_neighbors(pos)`.
+
+        The agent no longer attempts to construct a Grid from a path — callers
+        must pass a ready Grid instance. This keeps the agent robust and avoids
+        import/constructor fragility during transitions.
+        """
+        # Don't accept raw path-like values here; require a Grid instance.
+        if isinstance(grid, Path):
+            raise TypeError("OnlineAgent now requires a Grid instance; construct a Grid (e.g. src.grid.Grid.from_csv(path)) and pass it in.")
+        self.impl = grid
+        # default to with-stats A* if available
+        from experiments.ahsan.search import ALGORITHMS_WITH_STATS
+
+        if search_algo is None:
+            # prefer astar_with_stats
+            self.search = ALGORITHMS_WITH_STATS.get("astar")
+        else:
+            self.search = search_algo
+        # normalize start/goal to tuples
+        self.start: Coord = normalize_coord(tuple(self.impl.start))
+        self.goal: Coord = normalize_coord(tuple(self.impl.goal))
+        self.current: Coord = self.start
+        self.full_map = full_map
+
+        # known tiles maintained by agent
+        self.known_passable: Set[Coord] = set()
+        self.known_walls: Set[Coord] = set()
+        # initialize known tiles if full_map
+        if self.full_map:
+            for r in range(self.impl.height):
+                for c in range(self.impl.width):
+                    pos = (r, c)
+                    # Asthar grid stores strings like '0' and '1' and may have extra border
+                    try:
+                        tile = self.impl.grid[r][c]
+                    except Exception:
+                        continue
+                    if tile == '1':
+                        self.known_walls.add(pos)
+                    else:
+                        self.known_passable.add(pos)
+        else:
+            # reveal starting cell and its neighbors (simulate fog radius=1)
+            # prefer Grid.reveal_from if available
+            if hasattr(self.impl, "reveal_from"):
+                newly = self.impl.reveal_from(self.start)
+                for p in newly:
+                    p = normalize_coord(p)
+                    tile = self._tile_at(p)
+                    if tile == '1':
+                        self.known_walls.add(p)
+                    else:
+                        self.known_passable.add(p)
+            else:
+                self._reveal_from(self.start)
+
+        self.metrics = Metrics(start=self.start, goal=self.goal)
+        self.current_plan: List[Coord] = []
+
+    # --- perception helpers (experimental wrappers around Grid) ---
+    def _in_bounds(self, pos: Coord) -> bool:
+        r, c = pos
+        return 0 <= r < self.impl.height and 0 <= c < self.impl.width
+
+    def _tile_at(self, pos: Coord) -> str:
+        r, c = pos
+        return self.impl.grid[r][c]
+
+    def _reveal_from(self, pos: Coord) -> List[Coord]:
+        """Reveal pos and its 4-neighbors from the authoritative Asthar grid.
+        Returns list of newly revealed coords (tuples).
+        This is a small simulation of fog radius=1.
+        """
+        newly = []
+        for d in [(0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)]:
+            p = (pos[0] + d[0], pos[1] + d[1])
+            if not self._in_bounds(p):
+                continue
+            if p in self.known_passable or p in self.known_walls:
+                continue
+            tile = self._tile_at(p)
+            if tile == '1':
+                self.known_walls.add(p)
+            else:
+                self.known_passable.add(p)
+            newly.append(p)
+        return newly
+
+    # --- neighbor function used by search algorithms ---
+    def known_neighbors(self, pos: Coord) -> Iterable[Coord]:
+        # deterministic neighbor order: Up, Right, Down, Left
+        for dr, dc in [(-1, 0), (0, 1), (1, 0), (0, -1)]:
+            n = (pos[0] + dr, pos[1] + dc)
+            if n in self.known_passable:
+                yield n
+
+    # --- planning/execution ---
+    def plan_to(self, target: Coord) -> List[Coord]:
+        # prefer impl.get_visible_neighbors when available (TEAM_API)
+        if hasattr(self.impl, "get_visible_neighbors"):
+            neighbor_fn = lambda p: self.impl.get_visible_neighbors(p)
+        else:
+            neighbor_fn = lambda p: self.known_neighbors(p)
+
+        res = self.search(self.current, target, neighbor_fn)
+        # Search may return either a Path or a SearchResult-like object with .path
+        if hasattr(res, "path"):
+            path = res.path
+            self.metrics.nodes_expanded += getattr(res, "nodes_expanded", 0)
+            self.metrics.runtime += getattr(res, "runtime", 0.0)
+            self.metrics.cost = getattr(res, "cost", self.metrics.cost)
+        else:
+            path = res
+        return path
+
+    def choose_frontier(self) -> Coord | None:
+        """Return the nearest known passable cell that has at least one unknown neighbor.
+        Simple BFS on known graph.
+        """
+        from collections import deque
+
+        visited = {self.current}
+        q = deque([self.current])
+        while q:
+            cur = q.popleft()
+            # check if cur is a frontier
+            for dr, dc in [(-1, 0), (0, 1), (1, 0), (0, -1)]:
+                nb = (cur[0] + dr, cur[1] + dc)
+                if not self._in_bounds(nb):
+                    continue
+                if nb not in self.known_passable and nb not in self.known_walls:
+                    return cur
+            # otherwise expand
+            for n in self.known_neighbors(cur):
+                if n not in visited:
+                    visited.add(n)
+                    q.append(n)
+        return None
+
+    def step(self) -> bool:
+        """Perform one perception-plan-act cycle. Returns False when done.
+        """
+        # Perceive
+        if not self.full_map:
+            self._reveal_from(self.current)
+
+        # If at goal
+        if self.current == self.goal:
+            self.metrics.reached_goal = True
+            return False
+
+        # Ensure we have a plan
+        if not self.current_plan:
+            # Try plan to goal
+            path = self.plan_to(self.goal)
+            if path:
+                self.current_plan = path
+            else:
+                # choose frontier and plan to it
+                frontier = self.choose_frontier()
+                if frontier is None:
+                    # nowhere to explore
+                    return False
+                plan = self.plan_to(frontier)
+                if plan:
+                    self.current_plan = plan
+                else:
+                    return False
+
+        # Follow plan one step
+        if len(self.current_plan) >= 2:
+            next_pos = self.current_plan[1]
+            # if next_pos became a known wall in the meantime, replan
+            if next_pos in self.known_walls:
+                self.metrics.replans += 1
+                self.current_plan = []
+                return True
+            # move
+            self.current = next_pos
+            self.metrics.steps += 1
+            self.metrics.path_taken.append(self.current)
+            # drop the executed step from plan
+            self.current_plan = self.current_plan[1:]
+            # perceive again after moving
+            if not self.full_map:
+                self._reveal_from(self.current)
+            return True
+
+        # plan exhausted but didn't reach goal
+        self.current_plan = []
+        return True
+
+    def run(self, max_steps: int = 10000) -> Metrics:
+        start_time = time.time()
+        steps = 0
+        while steps < max_steps:
+            cont = self.step()
+            if not cont:
+                break
+            steps += 1
+        # finalize metrics
+        self.metrics.steps = steps
+        self.metrics.reached_goal = (self.current == self.goal)
+        return self.metrics
+
+
+def demo():
+    repo_root = Path(__file__).resolve().parents[2]
+    demo_map = repo_root / "maps" / "demo.csv"
+    agent = OnlineAgent(demo_map, full_map=False, search_algo=astar)
+    metrics = agent.run(1000)
+    print(metrics)
+
+
+if __name__ == "__main__":
+    demo()

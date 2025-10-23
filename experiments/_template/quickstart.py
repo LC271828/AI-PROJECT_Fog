@@ -33,7 +33,7 @@ if str(ROOT) not in sys.path:
 # Now we can import production modules from src/
 try:
     from src.grid import Grid  # type: ignore
-    from src.search import bfs  # type: ignore
+    from src.search import astar_neighbors  # type: ignore
 except Exception as e:
     raise SystemExit(
         "Failed to import production modules from src/.\n"
@@ -48,11 +48,16 @@ def main() -> None:
     if not demo_map.exists():
         raise SystemExit(f"Demo map not found at {demo_map}")
 
-    # Construct grid and run a simple BFS from start to goal
-    # Note: Grid.from_csv, g.start, g.goal, bfs are placeholders in scaffold.
+    # Construct grid and run a simple A* (neighbors-based) from start to goal
+    # Note: functions are placeholders in scaffold.
     g = Grid.from_csv(demo_map)
+    g.reveal_from(g.start)
+
+    def visible_neighbors(rc):
+        return g.get_visible_neighbors(rc)
+
     start, goal = g.start, g.goal
-    path = bfs(g, start, goal)
+    path = astar_neighbors(start, goal, visible_neighbors)
 
     # Summarize result without depending on visualization
     length = len(path) if path else None

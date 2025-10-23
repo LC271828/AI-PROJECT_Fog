@@ -45,7 +45,6 @@ without knowing the map internals.
 #           - Reveal the adjacent cell if in_bounds
 #           - If that adjacent cell is a wall, do not reveal anything beyond it
 # [ ] get_visible_neighbors(pos: tuple[int,int]) -> list[tuple[int,int]]
-# [ ] get_visible_neighbors(pos: tuple[int,int]) -> list[tuple[int,int]]
 #       - Return neighbors4(pos) filtered by in_bounds AND is_visible AND passable
 # [ ] visible_tiles() -> list[tuple[int,int]]
 #       - Return all coordinates where visible is True

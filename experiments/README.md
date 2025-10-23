@@ -1,5 +1,19 @@
 # Experiments Sandbox
 
+TL;DR (PowerShell from repo root)
+
+```powershell
+# Optional: install core deps (pytest). No runtime deps required yet.
+python -m pip install -r requirements.txt
+
+# Run the quickstart template (imports from src/ safely)
+python experiments/_template/quickstart.py
+
+# Make your own copy and run it
+copy experiments/_template/quickstart.py experiments/leo/quickstart.py
+python experiments/leo/quickstart.py
+```
+
 Purpose: give each teammate a safe playground for quick scripts, prototypes, and notebooks without touching production code.
 
 Rules
@@ -26,6 +40,7 @@ Suggested layout inside your folder
 
 Examples
 - See `experiments/_template/quickstart.py` for a tiny runner showing how to call production code safely.
+- Official search API uses a neighbors function (see TEAM_API.md). Plan on visible neighbors under fog.
 
 ## How to use quickstart
 
