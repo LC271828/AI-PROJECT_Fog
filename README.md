@@ -55,6 +55,13 @@ Dev quickstart (Windows)
 - Optional: include GUI dependency (pygame) if working on visualization:
 	- `powershell -ExecutionPolicy Bypass -File .\\scripts\\setup.ps1 -WithGUI`
 
+Dev quickstart (Linux/macOS)
+- Setup virtual environment and install deps:
+	- `./scripts/setup.sh` (or `WITH_GUI=1 ./scripts/setup.sh` to add pygame)
+- Run tests:
+	- `./scripts/test.sh`
+- Note: If you prefer PowerShell on Linux, use `pwsh -File ./scripts/setup.ps1`.
+
 Branch workflow
 - Work on `dev` by default (commit/push directly to `dev`).
 - If a specific bug/feature is risky or large, create a short-lived branch from `dev`, then open a PR into `dev`.
