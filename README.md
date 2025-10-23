@@ -64,8 +64,8 @@ Team roles
 - Gibran → Search + Metrics
 - Asthar → Grid + Fog + Maps
 - Ahsan → Agent + Heuristics
-- Thomz → Visualisation + Demo
-- Bayu → Docs + Slides
+ - Thomz → Visualisation + Co-Presenter (demo engineer; supports others as needed)
+- Bayu → Presentation Lead + Support (Slides; demo owner; helps wherever needed)
 - Leo → Integrator / Release Manager
 
 What’s included now

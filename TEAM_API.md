@@ -7,8 +7,8 @@ Roles
 - Gibran → Search + Metrics
 - Asthar → Grid + Fog + Maps
 - Ahsan → Agent + Heuristics
-- Thomz → Visualisation + Demo
-- Bayu → Docs + Slides
+- Thomz → Visualisation + Co-Presenter (demo engineer; assists teammates as needed)
+- Bayu → Presentation Lead + Support (Slides; demo owner; assists teammates as needed)
 - Leo → Integrator / Release Manager
 
 Branch workflow

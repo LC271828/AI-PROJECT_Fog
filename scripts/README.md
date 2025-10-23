@@ -10,6 +10,22 @@ powershell -ExecutionPolicy Bypass -File .\scripts\test.ps1           # run pyte
 powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -WithGUI # add pygame (GUI work)
 ```
 
+TL;DR (Linux/macOS)
+
+```bash
+# Setup (creates .venv, installs requirements; set WITH_GUI=1 to add pygame)
+./scripts/setup.sh
+# or
+WITH_GUI=1 ./scripts/setup.sh
+
+# Run tests
+./scripts/test.sh
+
+# Optional: use PowerShell Core on Linux to run the same .ps1 helpers
+# (requires 'pwsh' to be installed)
+pwsh -File ./scripts/create_issues_from_config.ps1 -SkipExisting
+```
+
 This folder contains:
 - Dev environment helpers
 - A config-driven workflow for creating and maintaining GitHub Issues
@@ -21,6 +37,11 @@ This folder contains:
 - `commit.ps1` — Stage, commit, and push current HEAD to remote `dev`.
 - `create_issues_from_config.ps1` — Reads a JSON config and creates/updates issues idempotently.
 - `issues.json` — Repository slug, labels to ensure exist, and the list of issues to create/update.
+
+Notes for Linux users
+- You don’t need the Windows PowerShell scripts; use `setup.sh` and `test.sh` above.
+- If you prefer PowerShell, install PowerShell Core (`pwsh`) and invoke `.ps1` files with `pwsh -File`.
+- For pygame on Linux, you may need system packages (SDL libraries) depending on your distro. If GUI work isn’t needed, skip it.
 
 ## Dev environment (PowerShell)
 

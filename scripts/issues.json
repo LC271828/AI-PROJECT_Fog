@@ -24,8 +24,8 @@
     {
       "title": "Implement search algorithms (BFS/DFS/UCS/A*)",
       "labels": ["enhancement", "algorithms", "core"],
-  "assignees": ["cliverosf1eld", "LC271828"],
-      "body": "Implement pure functions in src/search.py: \n- bfs(grid, start, goal) -> (path, nodes_expanded)\n- dfs(grid, start, goal) -> (path, nodes_expanded)\n- ucs(grid, start, goal) -> (path, nodes_expanded)\n- astar(grid, start, goal, h=manhattan) -> (path, nodes_expanded)\n- ALGORITHMS = {\\\"bfs\\\": bfs, \\\"dfs\\\": dfs, \\\"ucs\\\": ucs, \\\"astar\\\": astar}\n\nAcceptance criteria:\n- Works on a simple open grid and maps/demo.csv\n- A* path length equals BFS/UCS on unit-cost grid\n\nTasks:\n- [ ] Implement algorithms (no pygame/no I/O)\n- [ ] Shared reconstruct helper\n- [ ] Docstrings clarify nodes_expanded definition"
+      "assignees": ["cliverosf1eld", "LC271828"],
+      "body": "Implement pure functions in src/search.py (grid-first, path-only):\n- bfs(grid, start, goal) -> Path\n- dfs(grid, start, goal) -> Path\n- ucs(grid, start, goal) -> Path\n- astar(grid, start, goal, h=manhattan) -> Path\n- ALGORITHMS = {\\\"bfs\\\": bfs, \\\"dfs\\\": dfs, \\\"ucs\\\": ucs, \\\"astar\\\": astar}\n\nAcceptance criteria:\n- Works on a simple open grid and maps/demo.csv\n- A* path length equals BFS/UCS on unit-cost grid\n\nTasks:\n- [ ] Implement algorithms (no pygame/no I/O)\n- [ ] Shared reconstruct helper\n- [ ] Docstrings and types match TEAM_API.md"
     },
     {
       "title": "Implement OnlineAgent with re-planning",
@@ -48,8 +48,8 @@
     {
       "title": "Unit tests: search algorithms",
       "labels": ["tests"],
-  "assignees": ["cliverosf1eld", "LC271828"],
-      "body": "Add tests in tests/test_search.py:\n- BFS/DFS find path on simple grid\n- UCS equals BFS length on unit-cost maps\n- A* finds optimal path with Manhattan heuristic\n\nAcceptance criteria:\n- Tests pass locally and in CI (when added)\n\nTasks:\n- [ ] Tiny fixture grids\n- [ ] Tests per algorithm"
+      "assignees": ["cliverosf1eld", "LC271828"],
+      "body": "Add tests in tests/test_search.py (path-only):\n- BFS happy path + no-path case\n- UCS equals BFS path length on unit-cost maps\n- A* finds optimal path with Manhattan heuristic\n\nAcceptance criteria:\n- Tests pass locally and in CI (when added)\n\nTasks:\n- [ ] Tiny fixture maps (corridor, block)\n- [ ] Tests per algorithm"
     },
     {
       "title": "Unit tests: fog and agent",
@@ -86,6 +86,31 @@
       "labels": ["data", "enhancement"],
       "assignees": ["Raffolklore"],
       "body": "Add more CSV maps with varied patterns:\n- Narrow corridors, cul-de-sacs, simple open map\n\nAcceptance criteria:\n- New maps validate with Grid.from_csv\n\nTasks:\n- [ ] Create maps/demo2.csv and maps/demo3.csv\n- [ ] Update maps/README.md with notes"
+    }
+    ,
+    {
+      "title": "Productionize search in src/search.py (support + ALGORITHMS)",
+      "labels": ["algorithms", "core"],
+      "assignees": ["hush1a", "cliverosf1eld"],
+      "body": "Pair with Gibran to lift BFS/DFS/UCS/A* into src/search.py as pure functions and expose ALGORITHMS.\n\nScope:\n- Implement bfs/dfs/ucs/astar (Manhattan heuristic) as pure functions (no pygame/I/O).\n- Provide ALGORITHMS = {\\\"bfs\\\": bfs, \\\"dfs\\\": dfs, \\\"ucs\\\": ucs, \\\"astar\\\": astar}.\n- Align docstrings/types with TEAM_API.md (grid-first signatures).\n\nAcceptance criteria:\n- from src.search import bfs, astar works and returns Path (list[(r,c)]).\n- A* path length equals BFS/UCS on unit-cost test maps (to be covered in tests).\n- No imports from experiments/ in src/.\n\nTasks:\n- [ ] Port logic from experiments (strip pygame).\n- [ ] Add ALGORITHMS mapping.\n- [ ] Ensure docstrings/type hints match TEAM_API."
+    },
+    {
+      "title": "Headless CLI: implement src/main.py run path",
+      "labels": ["cli", "core", "docs"],
+      "assignees": ["hush1a"],
+      "body": "Implement a minimal headless CLI to run Grid + OnlineAgent and print metrics.\n\nScope:\n- Parse --map, --algo [bfs|dfs|ucs|astar], --gui, and read config.json defaults.\n- Headless: construct Grid.from_csv, create OnlineAgent, run to completion, print start/goal/path length + metrics.\n- GUI flag is ignored for now or prints a TODO.\n\nAcceptance criteria:\n- python -m src.main --map maps/demo.csv --algo bfs exits 0 and prints metrics.\n- Friendly errors for missing map or bad algo.\n\nTasks:\n- [ ] argparse wrapper + config merging.\n- [ ] Wire to Grid/Search/Agent once available.\n- [ ] Basic output formatting for demo."
+    },
+    {
+      "title": "Visualization stub + agent step-through (src/visualize.py)",
+      "labels": ["visualization", "agent"],
+      "assignees": ["Troggz", "Shazaw"],
+      "body": "Create a minimal Pygame visualizer and hook it to the agent step loop.\n\nScope:\n- Add run_pygame(grid, agent_factory, ...) that draws grid (walls/free), fog mask, and agent.\n- One tile per frame step; clean quit on window close.\n- Keep visualization optional and decoupled (no side effects at import).\n\nAcceptance criteria:\n- A dummy agent can be stepped visually at ~60 FPS; closing window exits cleanly.\n- Once Agent exists, replacing dummy with OnlineAgent shows fog reveal and re-plans.\n\nTasks:\n- [ ] Rendering surface + colors.\n- [ ] Draw fog mask (hidden vs visible vs wall).\n- [ ] Integrate one-step agent tick."
+    },
+    {
+      "title": "CLI bootstrap (pairing): argparse + headless run",
+      "labels": ["cli"],
+      "assignees": ["Troggz", "hush1a"],
+      "body": "Pairing task to get a basic CLI working quickly.\n\nScope:\n- Argparse for --map/--algo, load config.json defaults, print metrics.\n- Shares ownership with Bayu's headless CLI; coordinate on final entry point.\n\nAcceptance criteria:\n- Headless CLI runs on maps/demo.csv with bfs.\n\nTasks:\n- [ ] argparse + validation.\n- [ ] Print start/goal/path length neatly."
     }
   ]
 }
