@@ -1,10 +1,24 @@
 # Scripts
 
+TL;DR (Windows, from repo root)
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1          # venv + core deps
+powershell -ExecutionPolicy Bypass -File .\scripts\test.ps1           # run pytest
+# Optional
+powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -WithGUI # add pygame (GUI work)
+```
+
 This folder contains:
 - Dev environment helpers
 - A config-driven workflow for creating and maintaining GitHub Issues
 
 ## Files
+- `setup.ps1` — Creates `.venv` and installs dependencies (optional `-WithGUI` adds pygame).
+- `test.ps1` — Activates `.venv` (if present) and runs `pytest`.
+- `pull.ps1` — Fetch, checkout `dev`, and fast-forward pull.
+- `commit.ps1` — Stage, commit, and push current HEAD to remote `dev`.
 - `create_issues_from_config.ps1` — Reads a JSON config and creates/updates issues idempotently.
 - `issues.json` — Repository slug, labels to ensure exist, and the list of issues to create/update.
 

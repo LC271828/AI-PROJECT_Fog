@@ -1,3 +1,5 @@
+TL;DR: CSV grid with comma-separated tokens: S (start), G (goal), 0 (free), 1 (wall). Rows must be same length.
+
 Map format (CSV):
 - Use unquoted tokens: 0 = free, 1 = wall, S = start, G = goal
 - Comma-separated rows, consistent row length required
