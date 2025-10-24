@@ -93,11 +93,10 @@ import sys
 # For reading CSV files
 import csv
 
-# Compute project ROOT by walking two levels up from this file:
-# experiments/asthar/grid.py -> experiments/ -> project ROOT
-ROOT = Path(__file__).resolve().parents[2]
 from dataclasses import dataclass, field
 from typing import List, Tuple
+
+# CLEANUP: Removed unused ROOT variable from earlier experimental import context.
 
 # Grid class
 # === Stage 1 — Basic data structure ===
