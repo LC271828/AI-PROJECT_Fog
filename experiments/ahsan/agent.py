@@ -15,8 +15,8 @@ an agent-provided neighbor function based on the agent's known free tiles.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Callable, Iterable, List, Tuple, Set, Union
+from dataclasses import dataclass, field
+from typing import Callable, Iterable, List, Tuple, Set, Union, Optional, Any
 from pathlib import Path
 import time
 
@@ -52,15 +52,15 @@ class Metrics:
     runtime: float = 0.0
     cost: int = 0
     reached_goal: bool = False
-    path_taken: List[Coord] = None
+    path_taken: List[Coord] = field(default_factory=list)
 
     def __post_init__(self):
-        if self.path_taken is None:
+        if not self.path_taken:
             self.path_taken = [self.start]
 
 
 class OnlineAgent:
-    def __init__(self, grid, full_map: bool = True, search_algo: Callable = None):
+    def __init__(self, grid, full_map: bool = True, search_algo: Optional[Callable] = None):
         """
         grid: a Grid instance (constructed externally). The Grid must implement
         the TEAM_API: attributes `start`, `goal`, `height`, `width`, and methods
@@ -74,14 +74,8 @@ class OnlineAgent:
         if isinstance(grid, Path):
             raise TypeError("OnlineAgent now requires a Grid instance; construct a Grid (e.g. src.grid.Grid.from_csv(path)) and pass it in.")
         self.impl = grid
-        # default to with-stats A* if available
-        from experiments.ahsan.search import ALGORITHMS_WITH_STATS
-
-        if search_algo is None:
-            # prefer astar_with_stats
-            self.search = ALGORITHMS_WITH_STATS.get("astar")
-        else:
-            self.search = search_algo
+        # default to A* if no search algo provided
+        self.search = search_algo or astar
         # normalize start/goal to tuples
         self.start: Coord = normalize_coord(tuple(self.impl.start))
         self.goal: Coord = normalize_coord(tuple(self.impl.goal))
@@ -170,13 +164,14 @@ class OnlineAgent:
 
         res = self.search(self.current, target, neighbor_fn)
         # Search may return either a Path or a SearchResult-like object with .path
-        if hasattr(res, "path"):
-            path = res.path
-            self.metrics.nodes_expanded += getattr(res, "nodes_expanded", 0)
-            self.metrics.runtime += getattr(res, "runtime", 0.0)
-            self.metrics.cost = getattr(res, "cost", self.metrics.cost)
+        res_any: Any = res
+        if hasattr(res_any, "path"):
+            path = res_any.path
+            self.metrics.nodes_expanded += getattr(res_any, "nodes_expanded", 0)
+            self.metrics.runtime += getattr(res_any, "runtime", 0.0)
+            self.metrics.cost = getattr(res_any, "cost", self.metrics.cost)
         else:
-            path = res
+            path = res_any
         return path
 
     def choose_frontier(self) -> Coord | None:
@@ -273,7 +268,15 @@ class OnlineAgent:
 def demo():
     repo_root = Path(__file__).resolve().parents[2]
     demo_map = repo_root / "maps" / "demo.csv"
-    agent = OnlineAgent(demo_map, full_map=False, search_algo=astar)
+    # Build a Grid instance from Asthar's experimental grid implementation
+    # OnlineAgent expects a Grid-like object, not a Path
+    try:
+        from experiments.asthar.grid import Grid as AstharGrid
+        g = AstharGrid()
+        g.from_csv(map=demo_map)
+        agent = OnlineAgent(g, full_map=False, search_algo=astar)
+    except Exception as e:
+        raise SystemExit(f"Failed to initialize OnlineAgent demo with grid: {e}")
     metrics = agent.run(1000)
     print(metrics)
 
