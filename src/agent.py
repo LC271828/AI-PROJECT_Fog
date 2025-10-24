@@ -283,22 +283,5 @@ class OnlineAgent:
 		return self.metrics
 
 
-def demo():
-	repo_root = Path(__file__).resolve().parents[2]
-	demo_map = repo_root / "maps" / "demo.csv"
-	# Build a Grid instance from Asthar's experimental grid implementation
-	# OnlineAgent expects a Grid-like object, not a Path
-	try:
-		from experiments.asthar.grid import Grid as AstharGrid
-		g = AstharGrid()
-		g.from_csv(map=demo_map)
-		agent = OnlineAgent(g, full_map=False, search_algo=astar)
-	except Exception as e:
-		raise SystemExit(f"Failed to initialize OnlineAgent demo with grid: {e}")
-	metrics = agent.run(1000)
-	print(metrics)
-
-
-if __name__ == "__main__":
-	demo()
+# (Demo code removed from src; see scripts/demo_agent.py for a runnable demo.)
 # ===== End copied implementation from experiments/ahsan/agent.py =====
