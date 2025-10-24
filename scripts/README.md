@@ -29,6 +29,7 @@ pwsh -File ./scripts/create_issues_from_config.ps1 -SkipExisting
 This folder contains:
 - Dev environment helpers
 - A config-driven workflow for creating and maintaining GitHub Issues
+- Note: Demo entry points have moved to `examples/`. The old `scripts/demo_*` wrappers have been removed.
 
 ## Files
 - `setup.ps1` — Creates `.venv` and installs dependencies (optional `-WithGUI` adds pygame).
