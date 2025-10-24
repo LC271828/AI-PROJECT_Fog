@@ -71,6 +71,22 @@ Tips
 <!-- CHANGE: Moved the WithGUI setup command from the Demos tips section up into
      Dev quickstart (Windows) under the Optional GUI bullet to avoid confusion. -->
 
+## Headless CLI
+
+You can run a minimal headless CLI that loads `config.json` (overridden by flags), runs the agent, and prints metrics.
+
+Examples (from repo root):
+- `python -m src.main`  # uses `config.json` (default map, algo=astar, fog on)
+- `python -m src.main --map maps/demo.csv --algo bfs --no-fog`
+
+Flags
+- `--config` path to JSON config (default: `config.json`)
+- `--map` CSV map path (overrides config)
+- `--algo` one of bfs|dfs|ucs|astar (overrides config)
+- `--no-fog` disable fog (agent has full map)
+- `--fog` enable fog (default if config has fog_radius > 0)
+- `--gui` accepted but not implemented yet (prints a notice)
+
 Dev quickstart (Linux/macOS)
 - Setup virtual environment and install deps:
 	- `./scripts/setup.sh` (or `WITH_GUI=1 ./scripts/setup.sh` to add pygame)

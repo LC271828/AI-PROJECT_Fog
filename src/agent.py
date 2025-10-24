@@ -154,8 +154,12 @@ class OnlineAgent:
 
 	# --- planning/execution ---
 	def plan_to(self, target: Coord) -> List[Coord]:
-		# prefer impl.get_visible_neighbors when available (TEAM_API)
-		if hasattr(self.impl, "get_visible_neighbors"):
+		# CHANGE(TEAM_API): When full_map is True, use authoritative grid neighbors (no fog).
+		# Otherwise, prefer impl.get_visible_neighbors under fog. Fallback to agent-known.
+		if self.full_map and hasattr(self.impl, "neighbors4"):
+			# Only return passable neighbors in full-map mode
+			neighbor_fn = lambda p: [n for n in self.impl.neighbors4(p[0], p[1]) if self.impl.passable(n[0], n[1])]
+		elif hasattr(self.impl, "get_visible_neighbors"):
 			neighbor_fn = lambda p: self.impl.get_visible_neighbors(p)
 		else:
 			neighbor_fn = lambda p: self.known_neighbors(p)
@@ -278,8 +282,15 @@ class OnlineAgent:
 				break
 			steps += 1
 		# finalize metrics
-		self.metrics.steps = steps
+		# CHANGE(METRICS): Preserve movement-based steps tracked in step(); do not overwrite
+		# with iteration count. This keeps 'steps' equal to actual moves executed.
 		self.metrics.reached_goal = (self.current == self.goal)
+		# CHANGE(METRICS): Provide a simple cost based on the taken path length on unit-cost maps.
+		if self.metrics.path_taken:
+			self.metrics.cost = max(0, len(self.metrics.path_taken) - 1)
+		# CHANGE(METRICS): If no per-search runtime was accumulated, set total runtime.
+		if not self.metrics.runtime:
+			self.metrics.runtime = max(0.0, time.time() - start_time)
 		return self.metrics
 
 
