@@ -1,28 +1,15 @@
-from pathlib import Path
-from src.grid import Grid
+"""DEPRECATED wrapper for the grid demo.
 
+This script is kept temporarily for convenience. Prefer running:
 
-def main():
-    repo_root = Path(__file__).resolve().parents[1]
-    demo_map = repo_root / "maps" / "demo.csv"
-    # CHANGE: Use TEAM_API classmethod constructor for consistency with examples and docs
-    g = Grid.from_csv(demo_map)
+  python -m examples.demo_grid
 
-    print("Height:", g.height)
-    print("Width:", g.width)
+which is the canonical demo location.
+"""
 
-    print("Initial visible (should be all False):")
-    for row in g.visible:
-        print(row)
-
-    print("\nReveal from start:")
-    g.reveal_from(g.start)
-    for row in g.visible:
-        print(row)
-
-    print("\nVisible tiles:")
-    print(g.visible_tiles())
+from examples.demo_grid import main
 
 
 if __name__ == "__main__":
+    print("[DEPRECATED] Use 'python -m examples.demo_grid' instead.")
     main()

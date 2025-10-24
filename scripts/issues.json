@@ -19,12 +19,14 @@
       "title": "Implement Grid CSV loader + fog-of-war",
       "labels": ["enhancement", "core"],
       "assignees": ["Raffolklore", "LC271828"],
+      "state": "closed",
       "body": "Implement Grid in src/grid.py: \n- from_csv(path), in_bounds, passable, neighbors4, tile_at, is_visible\n- Fog: reveal_from(pos) radius=1 (U/D/L/R), walls reveal and block beyond; no re-fogging\n- get_visible_neighbors(pos), visible_tiles()\nCSV rules: rectangular; symbols {0,1,S,G}; exactly one S and one G; raise ValueError.\n\nAcceptance criteria:\n- Loading maps/demo.csv yields correct grid/start/goal; visible mask starts all False\n- reveal_from(start) reveals start and adjacent cells per spec; visibility persists (no re-fog)\n- No auto-added boundary walls; coordinates match CSV\n\nTasks:\n- [ ] Implement data structure and API\n- [ ] Input validation with helpful error messages\n- [ ] Minimal doctests or comments with asserts"
     },
     {
       "title": "Implement search algorithms (BFS/DFS/UCS/A*)",
       "labels": ["enhancement", "algorithms", "core"],
       "assignees": ["cliverosf1eld", "LC271828"],
+      "state": "closed",
       "body": "Implement pure functions in src/search.py (grid-first, path-only):\n- bfs(grid, start, goal) -> Path\n- dfs(grid, start, goal) -> Path\n- ucs(grid, start, goal) -> Path\n- astar(grid, start, goal, h=manhattan) -> Path\n- ALGORITHMS = {\\\"bfs\\\": bfs, \\\"dfs\\\": dfs, \\\"ucs\\\": ucs, \\\"astar\\\": astar}\n\nAcceptance criteria:\n- Works on a simple open grid and maps/demo.csv\n- A* path length equals BFS/UCS on unit-cost grid\n\nTasks:\n- [ ] Implement algorithms (no pygame/no I/O)\n- [ ] Shared reconstruct helper\n- [ ] Docstrings and types match TEAM_API.md"
     },
     {
@@ -49,6 +51,7 @@
       "title": "Unit tests: search algorithms",
       "labels": ["tests"],
       "assignees": ["cliverosf1eld", "LC271828"],
+      "state": "closed",
       "body": "Add tests in tests/test_search.py (path-only):\n- BFS happy path + no-path case\n- UCS equals BFS path length on unit-cost maps\n- A* finds optimal path with Manhattan heuristic\n\nAcceptance criteria:\n- Tests pass locally and in CI (when added)\n\nTasks:\n- [ ] Tiny fixture maps (corridor, block)\n- [ ] Tests per algorithm"
     },
     {
@@ -61,6 +64,7 @@
       "title": "Align search API across code and docs",
       "labels": ["design", "docs"],
   "assignees": ["cliverosf1eld", "LC271828"],
+      "state": "closed",
       "body": "Ensure a single search signature across code and docs:\n- Keep grid-first signature (matches quickstart and TEAM_API.md) or update consistently\n- Update README.md, TEAM_API.md, quickstart accordingly\n\nAcceptance criteria:\n- All docs and examples use the same signatures\n\nTasks:\n- [ ] Confirm final signature\n- [ ] Update docs and examples"
     },
     {
@@ -72,6 +76,7 @@
     {
       "title": "CODEOWNERS setup",
       "labels": ["infra"],
+      "state": "closed",
       "assignees": ["LC271828"],
       "body": "Add .github/CODEOWNERS with module ownership:\n- Core modules owned by respective leads + integrator\n- experiments/* owned per person\n\nAcceptance criteria:\n- PRs auto-request appropriate reviewers\n\nTasks:\n- [ ] Fill with real usernames\n- [ ] Commit to dev and verify on a test PR"
     },

@@ -1,20 +1,15 @@
-from pathlib import Path
-from src.grid import Grid
-from src.agent import OnlineAgent
-from src.search import astar_neighbors as astar
+"""DEPRECATED wrapper for the agent demo.
 
+This script is kept temporarily for convenience. Prefer running:
 
-def main():
-    repo_root = Path(__file__).resolve().parents[1]
-    demo_map = repo_root / "maps" / "demo.csv"
+  python -m examples.demo_agent
 
-    # CHANGE: Use TEAM_API classmethod constructor for consistency with examples and docs
-    g = Grid.from_csv(demo_map)
+which is the canonical demo location.
+"""
 
-    agent = OnlineAgent(g, full_map=False, search_algo=astar)
-    metrics = agent.run(1000)
-    print(metrics)
+from examples.demo_agent import main
 
 
 if __name__ == "__main__":
+    print("[DEPRECATED] Use 'python -m examples.demo_agent' instead.")
     main()

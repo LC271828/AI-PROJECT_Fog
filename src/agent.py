@@ -34,7 +34,7 @@ an agent-provided neighbor function based on the agent's known free tiles.
 # from __future__ import annotations  # already declared at top of file
 
 from dataclasses import dataclass, field
-from typing import Callable, Iterable, List, Tuple, Set, Union, Optional, Any
+from typing import Callable, Iterable, List, Tuple, Set, Optional, Any
 from pathlib import Path
 import time
 
@@ -118,19 +118,17 @@ class OnlineAgent:
 					else:
 						self.known_passable.add(pos)
 		else:
-			# reveal starting cell and its neighbors (simulate fog radius=1)
-			# prefer Grid.reveal_from if available
-			if hasattr(self.impl, "reveal_from"):
-				newly = self.impl.reveal_from(self.start)
-				for p in newly:
-					p = normalize_coord(p)
-					tile = self._tile_at(p)
-					if tile == '1':
-						self.known_walls.add(p)
-					else:
-						self.known_passable.add(p)
-			else:
-				self._reveal_from(self.start)
+			# CHANGE(TEAM_API): rely solely on Grid.reveal_from for perception
+			if not hasattr(self.impl, "reveal_from"):
+				raise TypeError("Grid implementation must provide reveal_from(pos) per TEAM_API")
+			newly = self.impl.reveal_from(self.start)
+			for p in newly:
+				p = normalize_coord(p)
+				tile = self._tile_at(p)
+				if tile == '1':
+					self.known_walls.add(p)
+				else:
+					self.known_passable.add(p)
 
 		self.metrics = Metrics(start=self.start, goal=self.goal)
 		self.current_plan: List[Coord] = []
@@ -144,25 +142,7 @@ class OnlineAgent:
 		r, c = pos
 		return self.impl.grid[r][c]
 
-	def _reveal_from(self, pos: Coord) -> List[Coord]:
-		"""Reveal pos and its 4-neighbors from the authoritative Asthar grid.
-		Returns list of newly revealed coords (tuples).
-		This is a small simulation of fog radius=1.
-		"""
-		newly = []
-		for d in [(0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)]:
-			p = (pos[0] + d[0], pos[1] + d[1])
-			if not self._in_bounds(p):
-				continue
-			if p in self.known_passable or p in self.known_walls:
-				continue
-			tile = self._tile_at(p)
-			if tile == '1':
-				self.known_walls.add(p)
-			else:
-				self.known_passable.add(p)
-			newly.append(p)
-		return newly
+    # NOTE: Internal _reveal_from removed; agent now delegates to Grid.reveal_from exclusively.
 
 	# --- neighbor function used by search algorithms ---
 	def known_neighbors(self, pos: Coord) -> Iterable[Coord]:
@@ -221,7 +201,17 @@ class OnlineAgent:
 		"""
 		# Perceive
 		if not self.full_map:
-			self._reveal_from(self.current)
+			# CHANGE(TEAM_API): Use Grid.reveal_from each step
+			if not hasattr(self.impl, "reveal_from"):
+				raise TypeError("Grid implementation must provide reveal_from(pos) per TEAM_API")
+			newly = self.impl.reveal_from(self.current)
+			for p in newly:
+				p = normalize_coord(p)
+				tile = self._tile_at(p)
+				if tile == '1':
+					self.known_walls.add(p)
+				else:
+					self.known_passable.add(p)
 
 		# If at goal
 		if self.current == self.goal:
@@ -262,7 +252,17 @@ class OnlineAgent:
 			self.current_plan = self.current_plan[1:]
 			# perceive again after moving
 			if not self.full_map:
-				self._reveal_from(self.current)
+				# CHANGE(TEAM_API): Use Grid.reveal_from after moving as well
+				if not hasattr(self.impl, "reveal_from"):
+					raise TypeError("Grid implementation must provide reveal_from(pos) per TEAM_API")
+				newly = self.impl.reveal_from(self.current)
+				for p in newly:
+					p = normalize_coord(p)
+					tile = self._tile_at(p)
+					if tile == '1':
+						self.known_walls.add(p)
+					else:
+						self.known_passable.add(p)
 			return True
 
 		# plan exhausted but didn't reach goal

@@ -81,6 +81,11 @@ foreach ($issue in $config.issues) {
   $title = $issue.title
   $labels = @($issue.labels)
   $assignees = @($issue.assignees)
+  $desiredState = $issue.state
+  $shouldClose = $false
+  if ($issue.PSObject.Properties.Name -contains 'close') {
+    $shouldClose = [bool]$issue.close
+  }
 
   $existingNum = Get-IssueNumberByTitle -Title $title
 
@@ -89,6 +94,10 @@ foreach ($issue in $config.issues) {
   Add-LabelsSafely -IssueNumber $existingNum -Labels $labels
   Add-AssigneesSafely -IssueNumber $existingNum -Assignees $assignees
   Add-CommentsSafely -IssueNumber $existingNum -Comments $issue.comments
+    if ($shouldClose -or ($desiredState -and ($desiredState -eq 'closed'))) {
+      try { gh issue close $existingNum --repo $Repo | Out-Null } catch {}
+      Write-Host "Closed existing issue #$existingNum - $title" -ForegroundColor Yellow
+    }
     Write-Host "Updated existing issue #$existingNum - $title" -ForegroundColor Yellow
     continue
   }
@@ -119,5 +128,9 @@ foreach ($issue in $config.issues) {
 
   Add-AssigneesSafely -IssueNumber $num -Assignees $assignees
   Add-CommentsSafely -IssueNumber $num -Comments $issue.comments
+  if ($shouldClose -or ($desiredState -and ($desiredState -eq 'closed'))) {
+    try { gh issue close $num --repo $Repo | Out-Null } catch {}
+    Write-Host "Closed #$num - $title" -ForegroundColor Yellow
+  }
   Write-Host "Created/updated #$num - $title" -ForegroundColor Green
 }
