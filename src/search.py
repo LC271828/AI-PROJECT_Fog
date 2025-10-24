@@ -1,5 +1,6 @@
-from heapq import heappush, heappop
+from heapq import heappush, heappop #new src search.py
 from collections import deque
+import time
 
 def reconstruct_path(came_from, start, goal):
     path = []
@@ -13,9 +14,8 @@ def reconstruct_path(came_from, start, goal):
     path.reverse()
     return path
 
-
-def bfs(grid, start, goal):
-    """Breadth-First Search."""
+def bfs_neighbors(grid, start, goal, neighbors_fn):
+    """Breadth-First Search"""
     queue = deque([start])
     came_from = {}
     visited = {start}
@@ -28,7 +28,7 @@ def bfs(grid, start, goal):
         if current == goal:
             return reconstruct_path(came_from, start, goal), nodes_expanded
 
-        for neighbor in grid.neighbors(current):
+        for neighbor in neighbors_fn(current):
             if neighbor not in visited:
                 visited.add(neighbor)
                 came_from[neighbor] = current
@@ -37,8 +37,8 @@ def bfs(grid, start, goal):
     return [], nodes_expanded
 
 
-def dfs(grid, start, goal):
-    """Depth-First Search."""
+def dfs_neighbors(grid, start, goal, neighbors_fn):
+    """Depth-First Search"""
     stack = [start]
     came_from = {}
     visited = {start}
@@ -51,7 +51,7 @@ def dfs(grid, start, goal):
         if current == goal:
             return reconstruct_path(came_from, start, goal), nodes_expanded
 
-        for neighbor in grid.neighbors(current):
+        for neighbor in neighbors_fn(current):
             if neighbor not in visited:
                 visited.add(neighbor)
                 came_from[neighbor] = current
@@ -60,8 +60,8 @@ def dfs(grid, start, goal):
     return [], nodes_expanded
 
 
-def ucs(grid, start, goal):
-    """Uniform Cost Search."""
+def ucs_neighbors(grid, start, goal, neighbors_fn):
+    """Uniform Cost Search"""
     frontier = []
     heappush(frontier, (0, start))
     came_from = {}
@@ -75,7 +75,7 @@ def ucs(grid, start, goal):
         if current == goal:
             return reconstruct_path(came_from, start, goal), nodes_expanded
 
-        for neighbor in grid.neighbors(current):
+        for neighbor in neighbors_fn(current):
             new_cost = cost_so_far[current] + grid.cost(current, neighbor)
             if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
                 cost_so_far[neighbor] = new_cost
@@ -85,8 +85,8 @@ def ucs(grid, start, goal):
     return [], nodes_expanded
 
 
-def astar(grid, start, goal, h=lambda a, b: abs(a[0]-b[0]) + abs(a[1]-b[1])):
-    """A* Search with Manhattan heuristic."""
+def astar_neighbors(grid, start, goal, neighbors_fn, h=lambda a, b: abs(a[0]-b[0]) + abs(a[1]-b[1])):
+    """A* Search (Manhattan heuristic)"""
     frontier = []
     heappush(frontier, (0, start))
     came_from = {}
@@ -100,7 +100,7 @@ def astar(grid, start, goal, h=lambda a, b: abs(a[0]-b[0]) + abs(a[1]-b[1])):
         if current == goal:
             return reconstruct_path(came_from, start, goal), nodes_expanded
 
-        for neighbor in grid.neighbors(current):
+        for neighbor in neighbors_fn(current):
             tentative_g = g_score[current] + grid.cost(current, neighbor)
             if neighbor not in g_score or tentative_g < g_score[neighbor]:
                 g_score[neighbor] = tentative_g
@@ -111,9 +111,29 @@ def astar(grid, start, goal, h=lambda a, b: abs(a[0]-b[0]) + abs(a[1]-b[1])):
     return [], nodes_expanded
 
 
-ALGORITHMS = {
-    "bfs": bfs,
-    "dfs": dfs,
-    "ucs": ucs,
-    "astar": astar
+class SearchResult:
+    def __init__(self, path, nodes_expanded, runtime, cost):
+        self.path = path
+        self.nodes_expanded = nodes_expanded
+        self.runtime = runtime
+        self.cost = cost
+
+
+def astar_with_stats(grid, start, goal):
+    start_time = time.time()
+    path, nodes_expanded = astar_neighbors(grid, start, goal, grid.get_visible_neighbors)
+    runtime = time.time() - start_time
+    cost = len(path) - 1 if path else 0
+    return SearchResult(path, nodes_expanded, runtime, cost)
+
+
+def astar_offline(grid):
+    return astar_neighbors(grid, grid.start, grid.goal, grid.neighbors4)
+
+
+ALGORITHMS_NEIGHBORS = {
+    "bfs": bfs_neighbors,
+    "dfs": dfs_neighbors,
+    "ucs": ucs_neighbors,
+    "astar": astar_neighbors
 }
