@@ -53,6 +53,19 @@ Dev quickstart (Windows)
 - Run tests:
 	- `powershell -ExecutionPolicy Bypass -File .\\scripts\\test.ps1`
 - Optional: include GUI dependency (pygame) if working on visualization:
+
+## Demos (quick start)
+
+We moved demos into `examples/` so they're easy to find and runnable as modules.
+
+- Grid visibility demo
+	- `python -m examples.demo_grid`
+- Online agent demo (text-only)
+	- `python -m examples.demo_agent`
+
+Tips
+- Run from the repository root so `src/` is on the import path.
+- Alternatively, you can run them directly: `python examples/demo_grid.py`.
 	- `powershell -ExecutionPolicy Bypass -File .\\scripts\\setup.ps1 -WithGUI`
 
 Dev quickstart (Linux/macOS)
