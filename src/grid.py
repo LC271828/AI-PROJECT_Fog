@@ -111,6 +111,19 @@ class Grid:
 	width: int = 0
 	#fog_radius: int           # fixed at 1 for this project (visibility one step)
 
+	# TEAM_API: Provide a factory classmethod that loads from CSV and returns a Grid
+	# This keeps the stricter validation centralized in the existing _from_csv loader.
+	@classmethod
+	def from_csv(cls, path: Path) -> "Grid":
+		"""Load a Grid from a CSV file path and return a new instance.
+
+		TEAM_API-compliant constructor. Uses the instance loader under the hood
+		to preserve validation and initialization in one place.
+		"""
+		g = cls()
+		g._from_csv(path)
+		return g
+
 	# === Stage 2 — Map loading (CSV) ===
 	# [ ] Implement from_csv(path: PathLike) -> Grid
 	#       - Read CSV strictly (comma-separated), validate rectangular shape
@@ -118,75 +131,57 @@ class Grid:
 	#       - Locate exactly one S and one G; raise if missing/duplicates
 	#       - Build grid (2D list[str]) and visible mask (all False)
 	#       - Set width/height and default fog_radius
-	def from_csv(self, map: Path):
-
-		# Open .csv file
-		# [ ] Implement from_csv(path: PathLike) -> Grid
-		# - Read CSV strictly (comma-separated)
+	def _from_csv(self, map: Path):
+		# CHANGE: reworked CSV load to enforce rectangular shape and strict validation.
+		# - Track expected_width from the first row; ensure all rows match.
+		# - Validate symbols; count exactly one S and one G.
+		# - Raise ValueError for any violations (do not print/exit).
+		rows: list[list[str]] = []
 		with open(map, newline='') as csvfile:
+			reader = csv.reader(csvfile)
+			for row in reader:
+				rows.append(row)
 
-			# Local Variables:
-			S_count = 0
-			G_count = 0
+		if not rows:
+			raise ValueError("Map CSV is empty")  # CHANGE: strict error
 
-			# Open reader object
-			mapreader = csv.reader(csvfile)
+		expected_width = len(rows[0])  # CHANGE: rectangular shape tracking
+		s_count = 0
+		g_count = 0
+		s_pos = (0, 0)
+		g_pos = (0, 0)
 
-			# FOR loop to go through every row in .csv file
-			# and input into "grid" array
-			# - Set width/height and default fog_radius
-			for row in mapreader:
-				self.grid.append(row)
+		for r, row in enumerate(rows):
+			if len(row) != expected_width:
+				# CHANGE: raise on non-rectangular shape
+				raise ValueError(f"Non-rectangular map at row {r}: expected {expected_width}, got {len(row)}")
+			for c, element in enumerate(row):
+				if element not in {"0", "1", "S", "G"}:
+					# CHANGE: raise on illegal symbol
+					raise ValueError(f"Invalid element '{element}' at ({r},{c})")
+				if element == "S":
+					s_count += 1
+					s_pos = (r, c)
+				elif element == "G":
+					g_count += 1
+					g_pos = (r, c)
 
-				self.width = 0
+		if s_count != 1:
+			# CHANGE: enforce exactly one S
+			raise ValueError(f"Expected exactly one 'S', found {s_count}")
+		if g_count != 1:
+			# CHANGE: enforce exactly one G
+			raise ValueError(f"Expected exactly one 'G', found {g_count}")
 
-				# IF statement logic error
-				# - Validate rectangular shape
-				if len(self.grid[self.height]) != len(self.grid[self.height]):
-					print("Maze does not have a rectangular shape")
-					#sys.exit(1)
+		# CHANGE: compute width/height once from validated rows
+		self.grid = rows
+		self.height = len(rows)
+		self.width = expected_width
+		self.start = s_pos
+		self.goal = g_pos
 
-				else:
-					# - Validate allowed symbols only: {"0","1","S","G"}
-					for element in self.grid[self.height]:
-						if element != "1" and element != "0" and element != "S" and element != "G":
-							print(f"Invalid Element: {element}")
-							#sys.exit(1)
-
-						# - Locate exactly one S and one G; raise if missing/duplicates
-						# Count number of starting/goal positions and check if multiple
-						# starting/goal positions are present
-						elif element == "S":
-							S_count += 1
-
-							if S_count > 1:
-								print("Multiple starting positions found")
-								#sys.exit(1)
-							else:
-								self.start = (self.height, self.width)
-
-						elif element == "G":
-							G_count += 1
-
-							if G_count > 1:
-								print("Multiple goal positions found")
-								#sys.exit(1)
-							else:
-								self.goal = (self.height, self.width)
-                    
-						self.width += 1
-
-				self.height += 1
-            
-			# Check for existence of starting/goal positions
-			if S_count == 0:
-				print("No starting positions found")
-			elif G_count == 0:
-				print("No goal positions found")
-
-			# Fill the "visible" grid with False and adjust it to be the
-			# same size as the "grid"
-			self.visible = [[False for _ in range(self.width)] for _ in range(self.height)]
+		# Initialize visibility mask (all hidden)
+		self.visible = [[False for _ in range(self.width)] for _ in range(self.height)]
 
 	# === Stage 3 — Core helpers (public API) ===
 	# [ ] in_bounds(r: int, c: int) -> bool
@@ -225,26 +220,11 @@ class Grid:
         
 	# [ ] neighbors4(r: int, c: int) -> list[tuple[int,int]]  # 4-connected only
 	def neighbors4(self, r, c):
-
-		if (self.in_bounds(r, c) == True):
-
-			# Variables and arrays
-			neighbors: list[tuple[int, int]] = []
-
-			# Find neighboring tiles using current position.
-			# Appends north, east, south and west only.
-			for y in range(r-1, r+2):
-
-				if (y == r):
-					neighbors.append((y, c-1))
-					neighbors.append((y, c+1))
-				else:
-					neighbors.append((y, c))
-        
-			return neighbors
-    
-		else:
+		# CHANGE: return only in-bounds 4-connected neighbors (U/R/D/L)
+		if not self.in_bounds(r, c):
 			return []
+		cand = [(r-1, c), (r, c+1), (r+1, c), (r, c-1)]
+		return [(rr, cc) for (rr, cc) in cand if self.in_bounds(rr, cc)]
     
 	# [ ] tile_at(r: int, c: int) -> str       # returns map symbol
 	def tile_at(self, r, c):
@@ -255,13 +235,10 @@ class Grid:
 
 	# [ ] is_visible(r: int, c: int) -> bool   # visible[r][c]
 	def is_visible(self, r, c):
-		if (self.in_bounds(r, c) == True):
-			if (self.visible[r][c] != False):
-				return True
-			else:
-				return False
-		#else:
-			#return "Given tile is out of bounds"
+		# CHANGE: out-of-bounds is not visible (return False explicitly)
+		if not self.in_bounds(r, c):
+			return False
+		return bool(self.visible[r][c])
         
 	# === Stage 4 — Fog logic (radius = 1) ===
 	# Note: Visibility is one step in 4 directions. Walls are revealed but block any reveal past them. No re-fogging.

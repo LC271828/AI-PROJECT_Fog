@@ -8,8 +8,7 @@ def main():
     repo_root = Path(__file__).resolve().parents[1]
     demo_map = repo_root / "maps" / "demo.csv"
 
-    g = Grid()
-    g.from_csv(map=demo_map)
+    g = Grid.from_csv(demo_map)
 
     print("Height:", g.height)
     print("Width:", g.width)
