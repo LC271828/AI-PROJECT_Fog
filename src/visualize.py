@@ -61,6 +61,9 @@ from src.grid import Grid
 from src.agent import OnlineAgent
 from src.search import ALGORITHMS_NEIGHBORS as SEARCH_ALGOS
 
+# Maximum FPS cap for GUI. Increase if you want faster stepping on large maps.
+MAX_FPS = 1000
+
 
 def _require_pygame():
 	"""Import pygame lazily and return the module.
@@ -288,7 +291,7 @@ def visualize(agent: OnlineAgent, grid: Grid, cell_size: int = 24, fps: int = 10
 								finished = True
 								paused = True
 					if event.key in (pygame.K_PLUS, pygame.K_EQUALS):
-						fps = min(120, fps + 5)
+						fps = min(MAX_FPS, fps + 5)
 					if event.key == pygame.K_MINUS:
 						fps = max(1, fps - 5)
 
@@ -481,7 +484,7 @@ def run_menu():
 					elif focus == 1 and algo_idx < len(algos) - 1:
 						algo_idx += 1
 				if event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
-					fps_init = min(120, fps_init + 1)
+					fps_init = min(MAX_FPS, fps_init + 1)
 				if event.key == pygame.K_MINUS:
 					fps_init = max(1, fps_init - 1)
 				if event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
