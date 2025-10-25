@@ -54,8 +54,13 @@ Usage examples (from repo root, optional)
 # Thomz: text-only renderer exists at examples/visualize_text.py; use that for quick tests.
 # The stubs below sketch a pygame API without enforcing pygame at import-time.
 
+import pygame
+from typing import Optional, List, Tuple
+from src.grid import Grid
+from src.agent import OnlineAgent
 
-def draw_frame(screen, grid, agent, cell_size=24, show_grid=True):
+
+def draw_frame(screen: "pygame.Surface", grid: Grid, agent: OnlineAgent, cell_size: int = 24, show_grid: bool = True):
 		"""Draw a single frame onto an existing pygame screen.
 
 		Contract
@@ -65,23 +70,101 @@ def draw_frame(screen, grid, agent, cell_size=24, show_grid=True):
 
 		TODO(Thomz): implement with pygame; placeholder is a no-op to keep CI green.
 		"""
-		# NOTE: Keep imports local to avoid ImportError in environments without pygame
-		try:
-			import importlib
-			pygame = importlib.import_module("pygame")  # type: ignore[assignment]
-		except Exception:
-			return  # silently no-op if pygame missing
+		# pygame is imported at module level (hard-coded import). If pygame is missing
+		# the import will fail here.
 
-		# TODO(Thomz): fill background
-		# TODO(Thomz): loop over r,c -> draw visible/free/wall/fog
-		# TODO(Thomz): draw start/goal markers
-		# TODO(Thomz): overlay current plan (agent.current_plan)
-		# TODO(Thomz): overlay agent position (agent.current)
-		# TODO(Thomz): optional grid lines for clarity
+		# Colors
+		FOG = (50, 150, 50)
+		WALL = (150, 40, 40)
+		FLOOR = (230, 230, 230)
+		START = (34, 139, 34)
+		GOAL = (178, 34, 34)
+		AGENT = (30, 144, 255)
+		PLAN_RGB = (255, 200, 0)
+		GRID_LINE = (200, 200, 200)
+
+		rows = getattr(grid, "height", None)
+		cols = getattr(grid, "width", None)
+		if rows is None or cols is None:
+			# try fallback to grid dimensions
+			rows = len(getattr(grid, "grid", []))
+			cols = len(getattr(grid, "grid", [])[0]) if rows else 0
+
+		# Draw cells
+		for r in range(rows):
+			for c in range(cols):
+				x = c * cell_size
+				y = r * cell_size
+				rect = pygame.Rect(x, y, cell_size, cell_size)
+
+				# Fog handling: if not visible, draw fog color
+				visible = False
+				try:
+					visible = bool(grid.is_visible(r, c))
+				except Exception:
+					visible = False
+
+				if not visible:
+					pygame.draw.rect(screen, FOG, rect)
+				else:
+					sym = grid.tile_at(r, c)
+					if sym == '1' or sym == '#':
+						color = WALL
+					elif sym == '0' or sym == '.':
+						color = FLOOR
+					elif sym == 'S':
+						color = START
+					elif sym == 'G':
+						color = GOAL
+					else:
+						color = FLOOR
+					pygame.draw.rect(screen, color, rect)
+
+				if show_grid:
+					pygame.draw.rect(screen, GRID_LINE, rect, 1)
+
+		# Plan overlay (semi-transparent)
+		plan: List[Tuple[int, int]] = getattr(agent, "current_plan", None) or []
+		if plan:
+			surf = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
+			surf.fill((*PLAN_RGB, 120))
+			# skip index 0 because that's usually the current position
+			for (r, c) in plan[1:]:
+				x = c * cell_size
+				y = r * cell_size
+				screen.blit(surf, (x, y))
+
+		# Agent overlay
+		pos = getattr(agent, "current", None)
+		if pos:
+			r, c = pos
+			center = (c * cell_size + cell_size // 2, r * cell_size + cell_size // 2)
+			radius = max(2, int(cell_size * 0.4))
+			pygame.draw.circle(screen, AGENT, center, radius)
+
+		# Start/Goal markers (draw again on top to ensure visibility)
+		try:
+			start = getattr(grid, "start", None)
+		except Exception:
+			start = None
+		try:
+			goal = getattr(grid, "goal", None)
+		except Exception:
+			goal = None
+
+		if start:
+			r, c = start
+			rect = pygame.Rect(c * cell_size, r * cell_size, cell_size, cell_size)
+			pygame.draw.rect(screen, START, rect, 2)
+		if goal:
+			r, c = goal
+			rect = pygame.Rect(c * cell_size, r * cell_size, cell_size, cell_size)
+			pygame.draw.rect(screen, GOAL, rect, 2)
+
 		return
 
 
-def visualize(agent, grid, cell_size=24, fps=10):
+def visualize(agent: OnlineAgent, grid: Grid, cell_size: int = 24, fps: int = 10):
 		"""Minimal pygame visualization loop.
 
 		Parameters
@@ -96,18 +179,205 @@ def visualize(agent, grid, cell_size=24, fps=10):
 
 		TODO(Thomz): implement with pygame; placeholder returns None to keep optional.
 		"""
-		try:
-			import importlib
-			pygame = importlib.import_module("pygame")  # type: ignore[assignment]
-		except Exception:
-				# pygame not installed; leave gracefully
-				return None
+		# pygame is imported at module level (hard-coded import). If pygame is missing
+		# the import will raise at module import time.
 
-		# TODO(Thomz): pygame.init(); clock = pygame.time.Clock()
-		# TODO(Thomz): screen = pygame.display.set_mode((grid.width*cell_size, grid.height*cell_size))
-		# TODO(Thomz): pygame.display.set_caption("Fog Maze")
-		# TODO(Thomz): paused = False
-		# TODO(Thomz): main loop: handle events, step when not paused, draw_frame, flip, clock.tick(fps)
-		# TODO(Thomz): on finish, return agent.metrics
-		# TODO(Thomz): pygame.quit()
-		return None
+		pygame.init()
+		clock = pygame.time.Clock()
+
+		rows = getattr(grid, "height", None)
+		cols = getattr(grid, "width", None)
+		if rows is None or cols is None:
+			rows = len(getattr(grid, "grid", []))
+			cols = len(getattr(grid, "grid", [])[0]) if rows else 0
+
+		# Fixed window dimensions
+		WINDOW_WIDTH = 1280
+		WINDOW_HEIGHT = 720
+		STATS_HEIGHT = 60  # pixels for stats area
+		STEPS_WIDTH = 120  # pixels for step counter panel
+		
+		# Calculate available space for maze
+		maze_max_width = WINDOW_WIDTH - STEPS_WIDTH
+		maze_max_height = WINDOW_HEIGHT - STATS_HEIGHT
+		
+		# Calculate scale to fit maze in available space
+		width = cols * cell_size
+		height = rows * cell_size
+		scale = min(maze_max_width / width, maze_max_height / height)
+		scaled_cell = max(4, int(cell_size * scale))
+		
+		# Calculate maze dimensions after scaling
+		maze_width = cols * scaled_cell
+		maze_height = rows * scaled_cell
+		
+		# Calculate position to center maze (offset by steps panel width)
+		maze_x = STEPS_WIDTH + (maze_max_width - maze_width) // 2
+		maze_y = STATS_HEIGHT + (maze_max_height - maze_height) // 2
+		
+		screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+		pygame.display.set_caption("Fog Maze")
+
+		# Font for HUD
+		try:
+			font = pygame.font.SysFont(None, 20)
+		except Exception:
+			font = None
+
+		paused = False
+		running = True
+		finished = False
+		
+		# History tracking
+		history = []  # List of (position, plan) tuples
+		current_step = 0  # Index into history for replay
+		
+		# Store initial state
+		initial_pos = getattr(agent, "current", None)
+		initial_plan = getattr(agent, "current_plan", None)
+		if initial_pos is not None:
+			history.append((initial_pos, initial_plan))
+		finished = False
+
+		# main loop
+		while running:
+			for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					running = False
+					break
+				if event.type == pygame.KEYDOWN:
+					if event.key == pygame.K_ESCAPE:
+						running = False
+						break
+					if event.key == pygame.K_SPACE:
+						paused = not paused
+						if event.key == pygame.K_n:
+							# single step while paused (no-op if already finished)
+							if paused and not finished:
+								try:
+									cont = agent.step()
+								except Exception:
+									cont = True
+								if cont is False:
+									finished = True
+									paused = True
+					if event.key in (pygame.K_PLUS, pygame.K_EQUALS):
+						fps = min(120, fps + 5)
+					if event.key == pygame.K_MINUS:
+						fps = max(1, fps - 5)
+
+			# Handle arrow keys for history navigation
+			keys = pygame.key.get_pressed()
+			if keys[pygame.K_LEFT]:
+				if current_step > 0:
+					current_step -= 1
+					pos, plan = history[current_step]
+					agent.current = pos
+					agent.current_plan = plan
+			elif keys[pygame.K_RIGHT]:
+				if current_step < len(history) - 1:
+					current_step += 1
+					pos, plan = history[current_step]
+					agent.current = pos
+					agent.current_plan = plan
+
+			# when not paused, advance one step per frame
+			if not paused and not finished:
+				try:
+					cont = agent.step()
+					# Store new state in history
+					pos = getattr(agent, "current", None)
+					plan = getattr(agent, "current_plan", None)
+					if pos is not None and (not history or pos != history[-1][0]):
+						history.append((pos, plan))
+						current_step = len(history) - 1
+				except Exception:
+					cont = True
+				if cont is False:
+					finished = True
+					paused = True
+
+			# draw
+			screen.fill((30, 30, 30))
+			
+			# Stats panel at top
+			pygame.draw.rect(screen, (40, 40, 40), (0, 0, WINDOW_WIDTH, STATS_HEIGHT))
+			pygame.draw.line(screen, (60, 60, 60), (0, STATS_HEIGHT), (WINDOW_WIDTH, STATS_HEIGHT))
+			
+			# Steps panel on left
+			pygame.draw.rect(screen, (40, 40, 40), (0, STATS_HEIGHT, STEPS_WIDTH, WINDOW_HEIGHT - STATS_HEIGHT))
+			pygame.draw.line(screen, (60, 60, 60), (STEPS_WIDTH, STATS_HEIGHT), (STEPS_WIDTH, WINDOW_HEIGHT))
+			
+			# Draw maze below stats panel and to the right of steps panel
+			maze_surface = pygame.Surface((maze_width, maze_height))
+			maze_surface.fill((30, 30, 30))
+			draw_frame(maze_surface, grid, agent, cell_size=scaled_cell, show_grid=True)
+			screen.blit(maze_surface, (maze_x, maze_y))
+			
+			# Stats/HUD in dedicated top panel
+			if font is not None:
+				# Top stats in three columns
+				# Left column
+				left_lines = [
+					f"Position: {getattr(agent, 'current', None)}",
+					f"Plan length: {len(getattr(agent, 'current_plan', []) or [])}"
+				]
+				
+				# Center column
+				center_lines = [
+					f"Start: {getattr(grid, 'start', None)}",
+					f"Goal: {getattr(grid, 'goal', None)}"
+				]
+				
+				# Right column
+				right_lines = [
+					f"FPS: {fps}",
+					"Space: pause/play" if not finished else "Finished — ESC to exit"
+				]
+				
+				# Draw left column
+				x = maze_x
+				for i, line in enumerate(left_lines):
+					surf = font.render(line, True, (200, 200, 200))
+					screen.blit(surf, (x, 5 + i * 18))
+				
+				# Draw center column
+				x = maze_x + (maze_width // 2)
+				for i, line in enumerate(center_lines):
+					surf = font.render(line, True, (200, 200, 200))
+					text_width = surf.get_width()
+					screen.blit(surf, (x - text_width // 2, 5 + i * 18))
+				
+				# Draw right column
+				x = maze_x + maze_width
+				for i, line in enumerate(right_lines):
+					surf = font.render(line, True, (200, 200, 200))
+					text_width = surf.get_width()
+					screen.blit(surf, (x - text_width - 10, 5 + i * 18))
+				
+				# Steps panel content
+				step_lines = []
+				for i in range(max(0, len(history))):
+					step_num = i + 1
+					is_current = i == current_step
+					prefix = "→ " if is_current else "  "
+					step_text = f"{prefix}Step {step_num}"
+					surf = font.render(step_text, True, (255, 255, 255) if is_current else (200, 200, 200))
+					screen.blit(surf, (10, STATS_HEIGHT + 10 + i * 20))
+				
+				# Navigation hint at bottom of steps panel
+				hint_text = "← → to navigate"
+				surf = font.render(hint_text, True, (150, 150, 150))
+				screen.blit(surf, (10, WINDOW_HEIGHT - 30))
+
+			pygame.display.flip()
+			clock.tick(fps)
+
+		# finalize metrics (try to be non-destructive)
+		try:
+			final_metrics = agent.run(0)
+		except Exception:
+			final_metrics = None
+
+		pygame.quit()
+		return final_metrics
