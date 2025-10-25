@@ -222,13 +222,18 @@ class OnlineAgent:
 		q = deque([self.current])
 		while q:
 			cur = q.popleft()
-			# check if cur is a frontier
+			# Leo: treat 'frontier' as a cell with at least one unknown neighbor,
+			# but avoid returning the current position to prevent zero-length plans.
+			is_frontier = False
 			for dr, dc in [(-1, 0), (0, 1), (1, 0), (0, -1)]:
 				nb = (cur[0] + dr, cur[1] + dc)
 				if not self._in_bounds(nb):
 					continue
 				if nb not in self.known_passable and nb not in self.known_walls:
-					return cur
+					is_frontier = True
+					break
+			if is_frontier and cur != self.current:
+				return cur
 			# otherwise expand
 			for n in self.known_neighbors(cur):
 				if n not in visited:
