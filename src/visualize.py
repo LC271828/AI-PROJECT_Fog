@@ -277,16 +277,16 @@ def visualize(agent: OnlineAgent, grid: Grid, cell_size: int = 24, fps: int = 10
 						break
 					if event.key == pygame.K_SPACE:
 						paused = not paused
-						if event.key == pygame.K_n:
-							# single step while paused (no-op if already finished)
-							if paused and not finished:
-								try:
-									cont = agent.step()
-								except Exception:
-									cont = True
-								if cont is False:
-									finished = True
-									paused = True
+					elif event.key == pygame.K_n:
+						# single step while paused (no-op if already finished)
+						if paused and not finished:
+							try:
+								cont = agent.step()
+							except Exception:
+								cont = True
+							if cont is False:
+								finished = True
+								paused = True
 					if event.key in (pygame.K_PLUS, pygame.K_EQUALS):
 						fps = min(120, fps + 5)
 					if event.key == pygame.K_MINUS:
@@ -456,6 +456,7 @@ def run_menu():
 	map_idx = 0
 	algo_idx = 0
 	focus = 0  # 0 = maps, 1 = algos
+	fps_init = 8  # allow adjusting initial FPS from the menu with +/-
 	running = True
 
 	while running:
@@ -479,6 +480,10 @@ def run_menu():
 						map_idx += 1
 					elif focus == 1 and algo_idx < len(algos) - 1:
 						algo_idx += 1
+				if event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
+					fps_init = min(120, fps_init + 1)
+				if event.key == pygame.K_MINUS:
+					fps_init = max(1, fps_init - 1)
 				if event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
 					# launch visualizer with current selection
 					if not map_files:
@@ -495,7 +500,7 @@ def run_menu():
 					search_fn = SEARCH_ALGOS.get(selected_algo)
 					agent = OnlineAgent(grid, full_map=False, search_algo=search_fn)
 					# run visualize (blocking) and then return to menu when it exits
-					visualize(agent, grid, cell_size=24, fps=8)
+					visualize(agent, grid, cell_size=24, fps=fps_init)
 
 		# draw menu
 		screen.fill(BG)
@@ -533,9 +538,11 @@ def run_menu():
 			screen.blit(s, (x, y))
 			y += 26
 
-		# instructions
-		instr = font.render("Up/Down: select  Tab: switch column  Enter: run  Esc: quit", True, (150, 150, 150))
-		screen.blit(instr, (20, WINDOW_HEIGHT - 30))
+		# instructions + FPS hint
+		instr1 = font.render("Up/Down: select  Tab: switch column  Enter: run  Esc: quit", True, (150, 150, 150))
+		screen.blit(instr1, (20, WINDOW_HEIGHT - 50))
+		instr2 = font.render(f"FPS: {fps_init}  (+/- to change)", True, (150, 150, 150))
+		screen.blit(instr2, (20, WINDOW_HEIGHT - 30))
 
 		pygame.display.flip()
 		clock.tick(30)
