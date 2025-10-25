@@ -27,14 +27,21 @@ if (-not (Test-Path $VenvPython)) {
 # Upgrade pip
 & $VenvPython -m pip install --upgrade pip
 
-# Install base test/runtime deps
-$base = @("pytest")
-if ($WithGUI) {
-  $base += @("pygame")
+# Install dependencies from requirements.txt when available (preferred),
+# else fall back to installing pytest only. Optionally add pygame.
+$req = Join-Path $RepoRoot "requirements.txt"
+if (Test-Path $req) {
+  Write-Host "[setup] Installing requirements.txt" -ForegroundColor Yellow
+  & $VenvPython -m pip install -r $req
+} else {
+  Write-Host "[setup] requirements.txt not found; installing pytest only" -ForegroundColor Yellow
+  & $VenvPython -m pip install pytest
 }
 
-Write-Host "[setup] Installing packages: $($base -join ', ')" -ForegroundColor Yellow
-& $VenvPython -m pip install @base
+if ($WithGUI) {
+  Write-Host "[setup] Installing pygame (GUI)" -ForegroundColor Yellow
+  & $VenvPython -m pip install pygame
+}
 
 Write-Host "[setup] Done. To use the venv in this shell, run:" -ForegroundColor Green
 Write-Host ".\\.venv\\Scripts\\Activate.ps1" -ForegroundColor Green

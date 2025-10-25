@@ -78,6 +78,7 @@ You can run a minimal headless CLI that loads `config.json` (overridden by flags
 Examples (from repo root):
 - `python -m src.main`  # uses `config.json` (default map, algo=astar, fog on)
 - `python -m src.main --map maps/demo.csv --algo bfs --no-fog`
+- `python -m src.main --map maps/demo.csv --algo astar --with-stats`  # collect nodes expanded + runtime
 
 Flags
 - `--config` path to JSON config (default: `config.json`)
@@ -85,6 +86,7 @@ Flags
 - `--algo` one of bfs|dfs|ucs|astar (overrides config)
 - `--no-fog` disable fog (agent has full map)
 - `--fog` enable fog (default if config has fog_radius > 0)
+- `--with-stats` use metrics-enabled search (nodes expanded, runtime, cost)
 - `--gui` accepted but not implemented yet (prints a notice)
 
 Dev quickstart (Linux/macOS)
@@ -131,9 +133,40 @@ print(len(path))  # None or steps
 
 Next steps (high level)
 1) Implement `src/grid.py` (CSV load, neighbors, visibility — no artificial borders)
-2) Implement `src/search.py` (DFS/BFS/UCS/A* via neighbor-function APIs + optional with-stats)
+2) Implement `src/search.py` (DFS/BFS/UCS/A* via neighbor-function APIs + optional with-stats wrappers)
 3) Implement `src/agent.py` (OnlineAgent, re-planning, Metrics; build neighbors_fn from `grid.get_visible_neighbors`)
 4) Implement `src/main.py` (CLI) and optionally `src/visualize.py` (Pygame)
 5) Write tests in `tests/` after modules are ready
 
 See `docs/` for assignment notes and decisions.
+
+## Test output and troubleshooting
+
+We enable per-test live logging and a rich terminal summary by default:
+
+- Per-test banners: start/end lines with durations (from `tests/conftest.py`).
+- Rich summary: totals and Top 5 slow tests (from `tests/pytest_rich_report.py`).
+
+Run tests from repo root:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\test.ps1
+```
+
+Disable the pretty summary if needed:
+
+```powershell
+python -m pytest -p no:tests.pytest_rich_report
+```
+
+If you see “No module named pytest”, your shell is using a Python without dev deps.
+
+- Ensure `.venv` is active and has requirements installed:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
+. .\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+Then rerun tests.

@@ -1,3 +1,9 @@
+"""Text visualization overlay tests.
+
+Purpose:
+- Validate that the masked renderer shows the agent and preserves fog on hidden cells.
+- Acts as a lightweight sanity check for visualization logic without pygame.
+"""
 from pathlib import Path
 
 from examples.visualize_text import render_masked
@@ -7,6 +13,7 @@ from src.search import ALGORITHMS_NEIGHBORS as SEARCH_ALGOS
 
 
 def test_render_masked_basic_symbols():
+    """Masked output should include '@' for agent and '?' to represent hidden tiles."""
     repo_root = Path(__file__).resolve().parents[1]
     demo_map = repo_root / "maps" / "demo.csv"
 

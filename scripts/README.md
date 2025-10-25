@@ -5,7 +5,7 @@ TL;DR (Windows, from repo root)
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1          # venv + core deps
-powershell -ExecutionPolicy Bypass -File .\scripts\test.ps1           # run pytest
+powershell -ExecutionPolicy Bypass -File .\scripts\test.ps1           # run pytest (verbose + rich summary)
 # Optional
 powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -WithGUI # add pygame (GUI work)
 ```
@@ -18,7 +18,7 @@ TL;DR (Linux/macOS)
 # or
 WITH_GUI=1 ./scripts/setup.sh
 
-# Run tests
+# Run tests (verbose + rich summary)
 ./scripts/test.sh
 
 # Optional: use PowerShell Core on Linux to run the same .ps1 helpers
@@ -55,7 +55,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
 # Include GUI dependency (pygame) if you plan to work on visualization
 powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -WithGUI
 
-# Run tests (uses .venv if present)
+# Run tests (uses .venv if present, respects pytest.ini for verbose output + rich summary)
 powershell -ExecutionPolicy Bypass -File .\scripts\test.ps1
 ```
 
@@ -87,6 +87,11 @@ Notes:
 - If assignees haven’t accepted invitations yet, the script will auto-assign the
   fallback assignee from `issues.json` (currently `LC271828`).
 - Bodies are piped via STDIN to avoid quoting issues.
+
+## Test output (pretty summary)
+- We enable per-test live logging and a Rich-based summary by default.
+- To disable the summary, run: `python -m pytest -p no:tests.pytest_rich_report`.
+- If your terminal has trouble rendering the panel, the plugin gracefully degrades when Rich is not available.
 
 ## Customizing
 - Edit `scripts/issues.json` to change or add issues. Each item can include:

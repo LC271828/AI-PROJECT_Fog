@@ -1,9 +1,16 @@
+"""Basic fog-of-war reveal behavior tests.
+
+Purpose:
+- Validate that revealing from the start marks the start visible and returns only in-bounds tiles.
+- Check the reveal radius (1 step in U/R/D/L plus the cell itself).
+"""
 from pathlib import Path
 
 import pytest
 
 
 def test_reveal_from_start_radius_one():
+	"""Reveal from start should mark it visible and reveal at most 5 tiles (self + 4 dirs)."""
 	# Load grid
 	repo_root = Path(__file__).resolve().parents[1]
 	demo_map = repo_root / "maps" / "demo.csv"

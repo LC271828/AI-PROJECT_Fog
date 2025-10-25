@@ -1,3 +1,9 @@
+"""Search 'with-stats' wrapper tests.
+
+Purpose:
+- Ensure stats wrappers exist and return SearchResult with path/nodes/runtime/cost.
+- Verify the with-stats path matches the plain algorithm's path.
+"""
 import types
 import pytest
 
@@ -22,6 +28,7 @@ HAVE_NEIGHBOR_STATS = all(
 
 @pytest.mark.skipif(not HAVE_NEIGHBOR_STATS, reason="Stats wrappers not available in src.search")
 def test_stats_wrapper_path_matches_plain_version():
+    """A* with-stats should match the plain A* path and provide basic metrics."""
     # small open grid 3x3
     def neighbors(rc):
         r, c = rc
@@ -43,6 +50,7 @@ def test_stats_wrapper_path_matches_plain_version():
 
 @pytest.mark.skipif(not HAVE_NEIGHBOR_STATS, reason="Stats wrappers not available in src.search")
 def test_algorithms_neighbors_with_stats_mapping():
+    """Mapping should expose four algorithms with callable wrapper functions."""
     m = S.ALGORITHMS_NEIGHBORS_WITH_STATS
     for k in ("bfs", "dfs", "ucs", "astar"):
         assert k in m and callable(m[k])
