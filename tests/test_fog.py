@@ -9,8 +9,7 @@ def test_reveal_from_start_radius_one():
 	demo_map = repo_root / "maps" / "demo.csv"
 	from src.grid import Grid
 
-	g = Grid()
-	g.from_csv(map=demo_map)
+	g = Grid.from_csv(demo_map)
 
 	# Initially no tiles are visible
 	assert all(all(not cell for cell in row) for row in g.visible)

@@ -43,6 +43,11 @@ from typing import Sequence
 
 
 def normalize_coord(pos: Sequence[int]) -> Tuple[int, int]:
+	"""Return a canonical (row, col) tuple from a 2-item sequence.
+
+	Raises
+	- ValueError: if ``pos`` is not a 2-length sequence of ints.
+	"""
 	if isinstance(pos, tuple):
 		if len(pos) != 2:
 			raise ValueError("coord must be length 2")
@@ -61,6 +66,18 @@ Coord = Tuple[int, int]
 
 @dataclass
 class Metrics:
+	"""Run statistics collected by the online agent.
+
+	Fields
+	- start, goal: coordinates
+	- steps: count of moves executed
+	- nodes_expanded: optional count reported by search (if available)
+	- replans: number of times a plan was discarded due to a newly-known obstacle
+	- runtime: total runtime accumulated/observed (seconds)
+	- cost: path cost on unit-cost maps (len(path_taken) - 1)
+	- reached_goal: terminal success flag
+	- path_taken: sequence of visited coordinates including start
+	"""
 	# TEAM_API fields + extras
 	start: Coord
 	goal: Coord
@@ -78,6 +95,12 @@ class Metrics:
 
 
 class OnlineAgent:
+	"""Simple online agent that perceives, plans, and acts under fog or full map.
+
+	The agent keeps sets of known passable cells and walls. Under fog, it delegates
+	perception to ``Grid.reveal_from`` each step. Planning uses a provided search
+	function over an appropriate neighbor function depending on fog state.
+	"""
 	def __init__(self, grid, full_map: bool = True, search_algo: Optional[Callable] = None):
 		"""
 		grid: a Grid instance (constructed externally). The Grid must implement
@@ -135,10 +158,12 @@ class OnlineAgent:
 
 	# --- perception helpers (experimental wrappers around Grid) ---
 	def _in_bounds(self, pos: Coord) -> bool:
+		"""Internal bounds check against the underlying grid dimensions."""
 		r, c = pos
 		return 0 <= r < self.impl.height and 0 <= c < self.impl.width
 
 	def _tile_at(self, pos: Coord) -> str:
+		"""Internal accessor for raw map symbol at a coordinate."""
 		r, c = pos
 		return self.impl.grid[r][c]
 
@@ -146,6 +171,10 @@ class OnlineAgent:
 
 	# --- neighbor function used by search algorithms ---
 	def known_neighbors(self, pos: Coord) -> Iterable[Coord]:
+		"""Neighbors within the agent's current known passable set.
+
+		Order is deterministic: Up, Right, Down, Left.
+		"""
 		# deterministic neighbor order: Up, Right, Down, Left
 		for dr, dc in [(-1, 0), (0, 1), (1, 0), (0, -1)]:
 			n = (pos[0] + dr, pos[1] + dc)
@@ -154,6 +183,13 @@ class OnlineAgent:
 
 	# --- planning/execution ---
 	def plan_to(self, target: Coord) -> List[Coord]:
+		"""Compute a path from current position to ``target`` using the configured search.
+
+		Chooses an appropriate neighbor function based on fog state:
+		- full_map: authoritative grid neighbors filtered by passable
+		- fogged: grid.get_visible_neighbors
+		- fallback: agent's known graph
+		"""
 		# CHANGE(TEAM_API): When full_map is True, use authoritative grid neighbors (no fog).
 		# Otherwise, prefer impl.get_visible_neighbors under fog. Fallback to agent-known.
 		if self.full_map and hasattr(self.impl, "neighbors4"):

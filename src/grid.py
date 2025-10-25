@@ -1,4 +1,4 @@
-"""Grid module (TODO).
+"""Grid module.
 
 Context
 - Map format: CSV (see maps/README.md) with symbols: 0=free, 1=wall, S=start, G=goal.
@@ -102,6 +102,19 @@ from typing import List, Tuple
 # === Stage 1 — Basic data structure ===
 @dataclass
 class Grid:
+	"""Authoritative map and fog-of-war state.
+
+	Attributes
+	- grid: 2D list of map symbols ('0' free, '1' wall, 'S' start, 'G' goal)
+	- start: (row, col) start coordinate
+	- goal: (row, col) goal coordinate
+	- visible: 2D boolean mask (same shape as grid) where True means revealed/seen
+	- height, width: map dimensions
+
+	Fog model
+	- Fixed radius-1 reveal in 4 directions (U,R,D,L). Walls are revealed but block
+	  any reveal beyond them. Once revealed, cells remain visible (no re-fogging).
+	"""
 	grid: list[list[str]] = field(default_factory=list)     # 2D array initialized with empty list
 	start: tuple[int, int] = (0, 0)     # Start tuple intialized
 	goal:  tuple[int, int] = (0, 0)     # Goal tuple initialized
@@ -110,14 +123,16 @@ class Grid:
 	width: int = 0
 	#fog_radius: int           # fixed at 1 for this project (visibility one step)
 
-	# TEAM_API: Provide a factory classmethod that loads from CSV and returns a Grid
-	# This keeps the stricter validation centralized in the existing _from_csv loader.
+	# TEAM_API: Provide a factory classmethod that loads from CSV and returns a Grid.
+	# Callers should prefer this single, consistent entry point.
 	@classmethod
 	def from_csv(cls, path: Path) -> "Grid":
-		"""Load a Grid from a CSV file path and return a new instance.
+		"""Load and return a new ``Grid`` from a CSV file.
 
-		TEAM_API-compliant constructor. Uses the instance loader under the hood
-		to preserve validation and initialization in one place.
+		Notes
+		- Validates rectangularity and allowed symbols.
+		- Enforces exactly one 'S' and one 'G'.
+		- Initializes the visibility mask to all False.
 		"""
 		g = cls()
 		g._from_csv(path)
@@ -131,6 +146,12 @@ class Grid:
 	#       - Build grid (2D list[str]) and visible mask (all False)
 	#       - Set width/height and default fog_radius
 	def _from_csv(self, map: Path):
+		"""Populate this instance from a CSV map file.
+
+		Raises
+		- ValueError: if the map is empty, non-rectangular, contains illegal symbols,
+		  or does not contain exactly one 'S' and one 'G'.
+		"""
 		# CHANGE: reworked CSV load to enforce rectangular shape and strict validation.
 		# - Track expected_width from the first row; ensure all rows match.
 		# - Validate symbols; count exactly one S and one G.
@@ -192,6 +213,7 @@ class Grid:
 
 	# [ ] in_bounds(r: int, c: int) -> bool
 	def in_bounds(self, r, c):
+		"""Return True if (r, c) is within map bounds."""
 		if (r >= 0 and r < self.height and c >= 0 and c < self.width):
 			return True
 		else:
@@ -199,6 +221,11 @@ class Grid:
         
 	# [ ] is_wall(r: int, c: int) -> bool
 	def is_wall(self, r, c):
+		"""Return True if the tile at (r, c) is a wall ('1').
+
+		Out-of-bounds positions are treated as non-walls; callers should check
+		``in_bounds`` first if needed.
+		"""
 		if (self.in_bounds(r,c) == True):
 			if (self.grid[r][c] == "1"):
 				return True
@@ -209,6 +236,10 @@ class Grid:
         
 	# [ ] passable(r: int, c: int) -> bool     # not a wall
 	def passable(self, r, c):
+		"""Return True if the tile at (r, c) is traversable.
+
+		Traversable tiles are '0', 'S', or 'G'.
+		"""
 		if (self.in_bounds(r,c) == True):
 			if (self.grid[r][c] == "0" or self.grid[r][c] == "S" or self.grid[r][c] == "G"):
 				return True
@@ -219,6 +250,7 @@ class Grid:
         
 	# [ ] neighbors4(r: int, c: int) -> list[tuple[int,int]]  # 4-connected only
 	def neighbors4(self, r, c):
+		"""Return 4-connected in-bounds neighbors of (r, c) in U,R,D,L order."""
 		# CHANGE: return only in-bounds 4-connected neighbors (U/R/D/L)
 		if not self.in_bounds(r, c):
 			return []
@@ -227,6 +259,10 @@ class Grid:
     
 	# [ ] tile_at(r: int, c: int) -> str       # returns map symbol
 	def tile_at(self, r, c):
+		"""Return the raw map symbol at (r, c).
+
+		Caller should ensure the position is in-bounds.
+		"""
 		if (self.in_bounds(r, c) == True):
 			return self.grid[r][c]
 		#else:
@@ -234,6 +270,7 @@ class Grid:
 
 	# [ ] is_visible(r: int, c: int) -> bool   # visible[r][c]
 	def is_visible(self, r, c):
+		"""Return True if (r, c) has been revealed (visible)."""
 		# CHANGE: out-of-bounds is not visible (return False explicitly)
 		if not self.in_bounds(r, c):
 			return False
@@ -254,6 +291,12 @@ class Grid:
 
 	# [ ] reveal_from(pos: Coord) -> list[Coord]
 	def reveal_from(self, pos: tuple[int,int]):
+		"""Reveal the current cell and its radius-1 neighbors.
+
+		Reveals in four directions (U,R,D,L). Walls are revealed but block
+		any reveal beyond them. Returns a list of coordinates that became visible
+		by this call (including ``pos`` if it was previously hidden).
+		"""
             
 		# Local Variables
 		neighbors: list[tuple[int, int]] = []
@@ -277,6 +320,10 @@ class Grid:
         
 	# [ ] get_visible_neighbors(pos: Coord) -> list[Coord]
 	def get_visible_neighbors(self, pos: tuple[int,int]):
+		"""Return passable neighbors of ``pos`` that are currently visible.
+
+		This is suitable for use as a neighbor function under fog-of-war.
+		"""
             
 		# Local Variables
 		neighbors: list[tuple[int, int]] = []
@@ -297,6 +344,7 @@ class Grid:
     
 	# [ ] visible_tiles() -> list[tuple[int,int]]
 	def visible_tiles(self):
+		"""Return a list of all coordinates that are currently visible."""
 
 		# Local Variables
 		visible_tiles: list[tuple[int, int]] = []

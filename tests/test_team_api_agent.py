@@ -13,8 +13,7 @@ def test_agent_api_contract_exists_and_runs():
     from src.grid import Grid
     demo = Path(__file__).resolve().parents[1] / "maps" / "demo.csv"
     # build grid via instance-style from_csv (compatible with current implementation)
-    g = Grid()
-    g.from_csv(map=demo)
+    g = Grid.from_csv(demo)
 
     # construct agent, ensure methods exist
     agent = A.OnlineAgent(g, full_map=False)

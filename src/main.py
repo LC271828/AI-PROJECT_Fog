@@ -33,6 +33,16 @@ def load_config(path: Path) -> dict:
 
 
 def build_parser() -> argparse.ArgumentParser:
+	"""Construct the CLI argument parser.
+
+	Flags
+	- --config: JSON config path (defaults used if missing)
+	- --map: CSV map path
+	- --algo: search algorithm name (bfs/dfs/ucs/astar)
+	- --gui: accept flag but GUI not implemented yet
+	- --no-fog/--fog: toggle fog; defaults based on config fog_radius
+	- --max-steps: cap number of agent steps
+	"""
 	p = argparse.ArgumentParser(prog="python -m src.main", description="Fog Maze (headless)")
 	p.add_argument("--config", type=str, default="config.json", help="Path to JSON config (default: config.json)")
 	p.add_argument("--map", dest="map_path", type=str, help="Path to CSV map (overrides config)")

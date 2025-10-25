@@ -1,14 +1,29 @@
+"""Lightweight search algorithms over a neighbor function.
+
+Each function accepts ``start``, ``goal``, and a ``neighbors_fn(pos)`` callable
+that yields adjacent coordinates. Algorithms return a list of coordinates
+representing a path from start to goal (inclusive). Empty list indicates no path.
+"""
+
 from heapq import heappush, heappop
 from collections import deque
 
 
-# Manhattan distance heuristic
 def manhattan(a, b):
+    """Manhattan distance heuristic between grid coordinates ``a`` and ``b``."""
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 
 def reconstruct_path(came_from, start, goal):
-    """Rebuild the path from start to goal."""
+    """Rebuild the path from ``start`` to ``goal`` using a parent map.
+
+    Parameters
+    - came_from: dict mapping node -> predecessor node
+    - start, goal: coordinates
+
+    Returns a list of coordinates from start to goal (inclusive),
+    or an empty list when no path exists.
+    """
     path = []
     current = goal
     while current != start:
@@ -22,7 +37,11 @@ def reconstruct_path(came_from, start, goal):
 
 
 def bfs_neighbors(start, goal, neighbors_fn):
-    """Breadth-First Search (returns shortest path for unweighted graphs)."""
+    """Breadth-First Search over a neighbor function.
+
+    Returns a shortest path in unweighted graphs as a list of coordinates,
+    or [] if no path exists.
+    """
     queue = deque([start])
     came_from = {}
     visited = {start}
@@ -43,7 +62,7 @@ def bfs_neighbors(start, goal, neighbors_fn):
 
 
 def dfs_neighbors(start, goal, neighbors_fn):
-    """Depth-First Search."""
+    """Depth-First Search over a neighbor function (not optimal in general)."""
     stack = [start]
     came_from = {}
     visited = {start}
@@ -64,7 +83,7 @@ def dfs_neighbors(start, goal, neighbors_fn):
 
 
 def ucs_neighbors(start, goal, neighbors_fn):
-    """Uniform Cost Search (equivalent to Dijkstra for uniform edge cost = 1)."""
+    """Uniform Cost Search (Dijkstra for unit edge cost = 1)."""
     frontier = []
     heappush(frontier, (0, start))
     came_from = {}
@@ -110,7 +129,7 @@ def astar_neighbors(start, goal, neighbors_fn, h=manhattan):
     return []
 
 
-# Export dictionary required by test
+# Export dictionary used by CLI/tests to select algorithms by name
 ALGORITHMS_NEIGHBORS = {
     "bfs": bfs_neighbors,
     "dfs": dfs_neighbors,
