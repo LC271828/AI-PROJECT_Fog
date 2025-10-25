@@ -104,6 +104,7 @@ def draw_frame(screen: Any, grid: Grid, agent: OnlineAgent, cell_size: int = 24,
 		GOAL = (255, 200, 34)
 		AGENT = (30, 144, 255)
 		PLAN_RGB = (255, 200, 0)
+		PATH_RGB = (255, 165, 0)  # orange for visited path
 		GRID_LINE = (200, 200, 200)
 
 		rows = getattr(grid, "height", None)
@@ -113,6 +114,9 @@ def draw_frame(screen: Any, grid: Grid, agent: OnlineAgent, cell_size: int = 24,
 			rows = len(getattr(grid, "grid", []))
 			cols = len(getattr(grid, "grid", [])[0]) if rows else 0
 
+		# Whether fog is disabled (agent has full map)
+		no_fog = bool(getattr(agent, "full_map", False))
+
 		# Draw cells
 		for r in range(rows):
 			for c in range(cols):
@@ -120,12 +124,13 @@ def draw_frame(screen: Any, grid: Grid, agent: OnlineAgent, cell_size: int = 24,
 				y = r * cell_size
 				rect = pygame.Rect(x, y, cell_size, cell_size)
 
-				# Fog handling: if not visible, draw fog color
-				visible = False
-				try:
-					visible = bool(grid.is_visible(r, c))
-				except Exception:
-					visible = False
+				# Fog handling: in no-fog mode treat all tiles as visible
+				visible = True if no_fog else False
+				if not no_fog:
+					try:
+						visible = bool(grid.is_visible(r, c))
+					except Exception:
+						visible = False
 
 				if not visible:
 					pygame.draw.rect(screen, FOG, rect)
@@ -145,6 +150,20 @@ def draw_frame(screen: Any, grid: Grid, agent: OnlineAgent, cell_size: int = 24,
 
 				if show_grid:
 					pygame.draw.rect(screen, GRID_LINE, rect, 1)
+
+		# Path-taken overlay (semi-transparent, drawn before plan)
+		m = getattr(agent, "metrics", None)
+		path_taken: List[Tuple[int, int]] = getattr(m, "path_taken", None) or []
+		if path_taken:
+			surf_path = pygame.Surface((cell_size, cell_size), pygame.SRCALPHA)
+			surf_path.fill((*PATH_RGB, 90))
+			for (r, c) in path_taken:
+				# avoid overdrawing the current agent cell; agent marker will show there
+				if getattr(agent, "current", None) == (r, c):
+					continue
+				x = c * cell_size
+				y = r * cell_size
+				screen.blit(surf_path, (x, y))
 
 		# Plan overlay (semi-transparent)
 		plan: List[Tuple[int, int]] = getattr(agent, "current_plan", None) or []
@@ -384,17 +403,21 @@ def visualize(agent: OnlineAgent, grid: Grid, cell_size: int = 24, fps: int = 10
 					text_width = surf.get_width()
 					screen.blit(surf, (x - text_width - 10, 5 + i * 18))
 				
-				# Steps panel content
-				step_lines = []
-				for i in range(max(0, len(history))):
-					step_num = i + 1
-					is_current = i == current_step
-					prefix = "→ " if is_current else "  "
-					step_text = f"{prefix}Step {step_num}"
-					surf = font.render(step_text, True, (255, 255, 255) if is_current else (200, 200, 200))
-					screen.blit(surf, (10, STATS_HEIGHT + 10 + i * 20))
-				
-				# Navigation hint at bottom of steps panel
+				# Steps panel content — compact counter
+				if history:
+					current_display = current_step + 1
+					total_display = len(history)
+					if current_step < total_display - 1:
+						counter_text = f"Step: {current_display}/{total_display}"
+					else:
+						# At latest step; show just the current counter to avoid redundant N/N
+						counter_text = f"Step: {current_display}"
+				else:
+					counter_text = "Step: 0"
+				surf = font.render(counter_text, True, (255, 255, 255))
+				screen.blit(surf, (10, STATS_HEIGHT + 10))
+
+				# Navigation hint at bottom of steps panel (history navigation still works)
 				hint_text = "← → to navigate"
 				surf = font.render(hint_text, True, (150, 150, 150))
 				screen.blit(surf, (10, WINDOW_HEIGHT - 30))
@@ -460,6 +483,7 @@ def run_menu():
 	algo_idx = 0
 	focus = 0  # 0 = maps, 1 = algos
 	fps_init = 8  # allow adjusting initial FPS from the menu with +/- or 'F' to edit
+	fog_enabled = True  # default like CLI (fog on); toggle with 'V'
 	# Simple inline editor state for FPS numeric entry
 	editing_fps = False
 	fps_buffer = ""
@@ -518,6 +542,9 @@ def run_menu():
 					# enter FPS editing mode
 					editing_fps = True
 					fps_buffer = ""
+				if event.key == pygame.K_v:
+					# toggle fog on/off
+					fog_enabled = not fog_enabled
 				if event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
 					fps_init = min(MAX_FPS, fps_init + 1)
 				if event.key == pygame.K_MINUS:
@@ -536,7 +563,8 @@ def run_menu():
 						print(f"Failed to load map {selected_map}: {e}")
 						continue
 					search_fn = SEARCH_ALGOS.get(selected_algo)
-					agent = OnlineAgent(grid, full_map=False, search_algo=search_fn)
+					# full_map is inverse of fog_enabled
+					agent = OnlineAgent(grid, full_map=(not fog_enabled), search_algo=search_fn)
 					# run visualize (blocking) and then return to menu when it exits
 					visualize(agent, grid, cell_size=24, fps=fps_init)
 
@@ -577,6 +605,8 @@ def run_menu():
 			y += 26
 
 		# instructions + FPS hint
+		instr_fog = font.render(f"Fog: {'On' if fog_enabled else 'Off'}  (V to toggle)", True, (150, 150, 150))
+		screen.blit(instr_fog, (20, WINDOW_HEIGHT - 70))
 		instr1 = font.render("Up/Down: select  Tab: switch column  Enter: run  Esc: quit", True, (150, 150, 150))
 		screen.blit(instr1, (20, WINDOW_HEIGHT - 50))
 		instr2 = font.render(f"FPS: {fps_init}  (+/- to change, F to type)", True, (150, 150, 150))
