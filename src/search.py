@@ -7,6 +7,8 @@ representing a path from start to goal (inclusive). Empty list indicates no path
 
 from heapq import heappush, heappop
 from collections import deque
+from dataclasses import dataclass
+import time
 
 
 def manhattan(a, b):
@@ -135,4 +137,58 @@ ALGORITHMS_NEIGHBORS = {
     "dfs": dfs_neighbors,
     "ucs": ucs_neighbors,
     "astar": astar_neighbors
+}
+
+
+# Leo: Minimal stats support without rewriting existing algorithms.
+# We wrap the provided neighbors_fn to count how many times a node is expanded
+# (each call corresponds to an expansion in these algorithms), and time the run.
+@dataclass
+class SearchResult:
+    path: list
+    nodes_expanded: int
+    runtime: float
+    cost: int
+
+
+def _with_stats(search_func, start, goal, neighbors_fn, **kwargs):
+    # Count how many times the algorithm expands a node (calls neighbors_fn)
+    count = {"n": 0}
+
+    def counted_neighbors(pos):
+        count["n"] += 1
+        return neighbors_fn(pos)
+
+    t0 = time.time()
+    path = search_func(start, goal, counted_neighbors, **kwargs)
+    runtime = time.time() - t0
+    cost = max(0, len(path) - 1) if path else 0
+    return SearchResult(path=path, nodes_expanded=count["n"], runtime=runtime, cost=cost)
+
+
+def bfs_neighbors_with_stats(start, goal, neighbors_fn):
+    """Leo: Wrapper that collects basic metrics for BFS without modifying BFS itself."""
+    return _with_stats(bfs_neighbors, start, goal, neighbors_fn)
+
+
+def dfs_neighbors_with_stats(start, goal, neighbors_fn):
+    """Leo: Wrapper that collects basic metrics for DFS without modifying DFS itself."""
+    return _with_stats(dfs_neighbors, start, goal, neighbors_fn)
+
+
+def ucs_neighbors_with_stats(start, goal, neighbors_fn):
+    """Leo: Wrapper that collects basic metrics for UCS without modifying UCS itself."""
+    return _with_stats(ucs_neighbors, start, goal, neighbors_fn)
+
+
+def astar_neighbors_with_stats(start, goal, neighbors_fn, h=manhattan):
+    """Leo: Wrapper that collects basic metrics for A* without modifying A* itself."""
+    return _with_stats(astar_neighbors, start, goal, neighbors_fn, h=h)
+
+
+ALGORITHMS_NEIGHBORS_WITH_STATS = {
+    "bfs": bfs_neighbors_with_stats,
+    "dfs": dfs_neighbors_with_stats,
+    "ucs": ucs_neighbors_with_stats,
+    "astar": astar_neighbors_with_stats,
 }

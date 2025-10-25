@@ -226,13 +226,10 @@ class Grid:
 		Out-of-bounds positions are treated as non-walls; callers should check
 		``in_bounds`` first if needed.
 		"""
-		if (self.in_bounds(r,c) == True):
-			if (self.grid[r][c] == "1"):
-				return True
-			else:
-				return False
-		#else:
-			#return "Given tile is out of bounds"
+		# Leo: Return explicit False for out-of-bounds to avoid implicit None
+		if not self.in_bounds(r, c):
+			return False
+		return self.grid[r][c] == "1"
         
 	# [ ] passable(r: int, c: int) -> bool     # not a wall
 	def passable(self, r, c):
@@ -240,13 +237,10 @@ class Grid:
 
 		Traversable tiles are '0', 'S', or 'G'.
 		"""
-		if (self.in_bounds(r,c) == True):
-			if (self.grid[r][c] == "0" or self.grid[r][c] == "S" or self.grid[r][c] == "G"):
-				return True
-			else:
-				return False
-		#else:
-			#return
+		# Leo: Return explicit False for out-of-bounds to improve robustness
+		if not self.in_bounds(r, c):
+			return False
+		return self.grid[r][c] in ("0", "S", "G")
         
 	# [ ] neighbors4(r: int, c: int) -> list[tuple[int,int]]  # 4-connected only
 	def neighbors4(self, r, c):
