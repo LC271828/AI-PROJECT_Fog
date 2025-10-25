@@ -56,8 +56,10 @@ Usage examples (from repo root, optional)
 
 import pygame
 from typing import Optional, List, Tuple
+from pathlib import Path
 from src.grid import Grid
 from src.agent import OnlineAgent
+from src.search import ALGORITHMS_NEIGHBORS as SEARCH_ALGOS
 
 
 def draw_frame(screen: "pygame.Surface", grid: Grid, agent: OnlineAgent, cell_size: int = 24, show_grid: bool = True):
@@ -78,7 +80,7 @@ def draw_frame(screen: "pygame.Surface", grid: Grid, agent: OnlineAgent, cell_si
 		WALL = (150, 40, 40)
 		FLOOR = (230, 230, 230)
 		START = (34, 139, 34)
-		GOAL = (178, 34, 34)
+		GOAL = (255, 200, 34)
 		AGENT = (30, 144, 255)
 		PLAN_RGB = (255, 200, 0)
 		GRID_LINE = (200, 200, 200)
@@ -182,7 +184,13 @@ def visualize(agent: OnlineAgent, grid: Grid, cell_size: int = 24, fps: int = 10
 		# pygame is imported at module level (hard-coded import). If pygame is missing
 		# the import will raise at module import time.
 
-		pygame.init()
+		# Initialize pygame only if it isn't already initialized. When called from
+		# the menu (which already calls pygame.init()) we want to preserve the
+		# initialized state so returning to the menu works smoothly.
+		_created_pygame = False
+		if not pygame.get_init():
+			pygame.init()
+			_created_pygame = True
 		clock = pygame.time.Clock()
 
 		rows = getattr(grid, "height", None)
@@ -379,5 +387,137 @@ def visualize(agent: OnlineAgent, grid: Grid, cell_size: int = 24, fps: int = 10
 		except Exception:
 			final_metrics = None
 
-		pygame.quit()
+		# Only quit pygame if this function initialized it. When called from the
+		# menu we must not quit pygame so the menu can continue running.
+		if _created_pygame:
+			pygame.quit()
 		return final_metrics
+
+
+def run_menu():
+	"""Run a simple pygame main menu to pick a map and a search algorithm.
+
+	Selecting Enter will load the chosen map and algorithm and launch
+	the visualizer. After the visualizer exits you return to the menu.
+	Controls: Up/Down to move, Tab to switch focus (maps/algos), Enter to run,
+	Esc to quit.
+	"""
+	# menu constants
+	WINDOW_WIDTH = 1280
+	WINDOW_HEIGHT = 720
+	BG = (30, 30, 30)
+	PANEL_BG = (40, 40, 40)
+	HIGHLIGHT = (255, 220, 120)
+	TEXT_COLOR = (200, 200, 200)
+	font = None
+	try:
+		pygame.init()
+		font = pygame.font.SysFont(None, 22)
+		screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+		pygame.display.set_caption("Fog Maze - Menu")
+		clock = pygame.time.Clock()
+	except Exception:
+		# If pygame isn't available or fails, abort to avoid crashing tests.
+		return
+
+	# gather maps
+	map_dir = Path("maps")
+	map_files = sorted([p for p in map_dir.glob("*.csv")])
+	map_names = [p.name for p in map_files]
+	if not map_names:
+		map_names = ["(no maps found)"]
+
+	# gather algorithms
+	algos = sorted(list(SEARCH_ALGOS.keys()))
+	if not algos:
+		algos = ["(no algos)"]
+
+	map_idx = 0
+	algo_idx = 0
+	focus = 0  # 0 = maps, 1 = algos
+	running = True
+
+	while running:
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				running = False
+				break
+			if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_ESCAPE:
+					running = False
+					break
+				if event.key == pygame.K_TAB:
+					focus = 1 - focus
+				if event.key == pygame.K_UP:
+					if focus == 0 and map_idx > 0:
+						map_idx -= 1
+					elif focus == 1 and algo_idx > 0:
+						algo_idx -= 1
+				if event.key == pygame.K_DOWN:
+					if focus == 0 and map_idx < len(map_names) - 1:
+						map_idx += 1
+					elif focus == 1 and algo_idx < len(algos) - 1:
+						algo_idx += 1
+				if event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
+					# launch visualizer with current selection
+					if not map_files:
+						continue
+					selected_map = map_files[map_idx]
+					selected_algo = algos[algo_idx]
+					# build grid and agent
+					try:
+						grid = Grid.from_csv(selected_map)
+					except Exception as e:
+						# show error briefly then continue
+						print(f"Failed to load map {selected_map}: {e}")
+						continue
+					search_fn = SEARCH_ALGOS.get(selected_algo)
+					agent = OnlineAgent(grid, full_map=False, search_algo=search_fn)
+					# run visualize (blocking) and then return to menu when it exits
+					visualize(agent, grid, cell_size=24, fps=8)
+
+		# draw menu
+		screen.fill(BG)
+		# title
+		title_s = font.render("Fog Maze — Select map and algorithm", True, HIGHLIGHT)
+		screen.blit(title_s, (20, 12))
+
+		# draw maps list panel
+		maps_x = 40
+		maps_y = 60
+		pygame.draw.rect(screen, PANEL_BG, pygame.Rect(maps_x - 10, maps_y - 10, 360, WINDOW_HEIGHT - maps_y - 40))
+		mx = maps_x
+		y = maps_y
+		for i, name in enumerate(map_names):
+			if i == map_idx:
+				col = HIGHLIGHT if focus == 0 else (220, 220, 160)
+			else:
+				col = TEXT_COLOR
+			s = font.render(name, True, col)
+			screen.blit(s, (mx, y))
+			y += 26
+
+		# draw algos list panel
+		algos_x = 420
+		algos_y = 60
+		pygame.draw.rect(screen, PANEL_BG, pygame.Rect(algos_x - 10, algos_y - 10, 200, WINDOW_HEIGHT - algos_y - 40))
+		x = algos_x
+		y = algos_y
+		for i, name in enumerate(algos):
+			if i == algo_idx:
+				col = HIGHLIGHT if focus == 1 else (220, 220, 160)
+			else:
+				col = TEXT_COLOR
+			s = font.render(name, True, col)
+			screen.blit(s, (x, y))
+			y += 26
+
+		# instructions
+		instr = font.render("Up/Down: select  Tab: switch column  Enter: run  Esc: quit", True, (150, 150, 150))
+		screen.blit(instr, (20, WINDOW_HEIGHT - 30))
+
+		pygame.display.flip()
+		clock.tick(30)
+
+	pygame.quit()
+	return

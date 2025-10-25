@@ -1,15 +1,11 @@
-from src.grid import Grid
-from src.agent import OnlineAgent
-from src.search import ALGORITHMS_NEIGHBORS as SEARCH_ALGOS
-from src.visualize import visualize
+from src.visualize import run_menu
 
 
 def main():
-    grid = Grid.from_csv('maps/demo.csv')
-    search_fn = SEARCH_ALGOS.get('ucs')
-    agent = OnlineAgent(grid, full_map=False, search_algo=search_fn)
-    visualize(agent, grid, cell_size=24, fps=8)
+
+	# Launch the interactive menu which will run the visualizer when selections are made.
+	run_menu()
 
 
 if __name__ == '__main__':
-    main()
+	main()
