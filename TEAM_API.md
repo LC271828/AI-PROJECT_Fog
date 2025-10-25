@@ -112,9 +112,16 @@ With-stats (metrics) variants
   - nodes_expanded: int
   - runtime: float (seconds)
   - cost: int (usually len(path) - 1)
+- API shape matches the neighbor-function style and exposes a mapping:
+  - `ALGORITHMS_NEIGHBORS_WITH_STATS = {"bfs": bfs_neighbors_with_stats, ...}`
 - Example:
 ```python
-res = astar_with_stats(grid, grid.start, grid.goal)
+from src.search import ALGORITHMS_NEIGHBORS_WITH_STATS as SEARCH_WITH_STATS
+
+def neighbors_fn(rc):
+  return grid.get_visible_neighbors(rc)
+
+res = SEARCH_WITH_STATS["astar"](grid.start, grid.goal, neighbors_fn)
 print(res.nodes_expanded, res.runtime, res.cost)
 ```
 
