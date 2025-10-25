@@ -459,7 +459,10 @@ def run_menu():
 	map_idx = 0
 	algo_idx = 0
 	focus = 0  # 0 = maps, 1 = algos
-	fps_init = 8  # allow adjusting initial FPS from the menu with +/-
+	fps_init = 8  # allow adjusting initial FPS from the menu with +/- or 'F' to edit
+	# Simple inline editor state for FPS numeric entry
+	editing_fps = False
+	fps_buffer = ""
 	running = True
 
 	while running:
@@ -468,6 +471,34 @@ def run_menu():
 				running = False
 				break
 			if event.type == pygame.KEYDOWN:
+				# Handle inline FPS editing mode first
+				if editing_fps:
+					if event.key == pygame.K_ESCAPE:
+						# cancel editing
+						editing_fps = False
+						fps_buffer = ""
+						continue
+					if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+						# apply if buffer has a number; else keep previous
+						if fps_buffer.strip():
+							try:
+								val = int(fps_buffer)
+								fps_init = max(1, min(MAX_FPS, val))
+							except Exception:
+								pass
+						fps_buffer = ""
+						editing_fps = False
+						continue
+					if event.key == pygame.K_BACKSPACE:
+						fps_buffer = fps_buffer[:-1]
+						continue
+					# accept digits from top row and keypad
+					if event.unicode and event.unicode.isdigit():
+						# limit length to avoid overflow
+						if len(fps_buffer) < 4:
+							fps_buffer += event.unicode
+						continue
+
 				if event.key == pygame.K_ESCAPE:
 					running = False
 					break
@@ -483,6 +514,10 @@ def run_menu():
 						map_idx += 1
 					elif focus == 1 and algo_idx < len(algos) - 1:
 						algo_idx += 1
+				if event.key == pygame.K_f:
+					# enter FPS editing mode
+					editing_fps = True
+					fps_buffer = ""
 				if event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
 					fps_init = min(MAX_FPS, fps_init + 1)
 				if event.key == pygame.K_MINUS:
@@ -544,8 +579,18 @@ def run_menu():
 		# instructions + FPS hint
 		instr1 = font.render("Up/Down: select  Tab: switch column  Enter: run  Esc: quit", True, (150, 150, 150))
 		screen.blit(instr1, (20, WINDOW_HEIGHT - 50))
-		instr2 = font.render(f"FPS: {fps_init}  (+/- to change)", True, (150, 150, 150))
+		instr2 = font.render(f"FPS: {fps_init}  (+/- to change, F to type)", True, (150, 150, 150))
 		screen.blit(instr2, (20, WINDOW_HEIGHT - 30))
+
+		# Draw inline FPS editor overlay if active
+		if editing_fps:
+			overlay = pygame.Surface((WINDOW_WIDTH, 60))
+			overlay.set_alpha(220)
+			overlay.fill((20, 20, 20))
+			screen.blit(overlay, (0, WINDOW_HEIGHT - 60))
+			prompt = f"Enter FPS (1..{MAX_FPS}), Enter to apply, Esc to cancel: {fps_buffer or ''}"
+			ps = font.render(prompt, True, (255, 220, 120))
+			screen.blit(ps, (20, WINDOW_HEIGHT - 45))
 
 		pygame.display.flip()
 		clock.tick(30)
