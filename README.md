@@ -64,6 +64,11 @@ We moved demos into `examples/` so they're easy to find and runnable as modules.
 - Online agent demo (text-only)
 	- `python -m examples.demo_agent`
 
+- GUI visualizer (optional)
+	- First install GUI dep: `powershell -ExecutionPolicy Bypass -File .\\scripts\\setup.ps1 -WithGUI`
+	- Run via CLI: `python -m src.main --gui`
+	- Or run the examples runner: `python -m examples.run_visualize`
+
 Tips
 - Run from the repository root so `src/` is on the import path.
 - Alternatively, you can run them directly: `python examples/demo_grid.py`.
@@ -87,7 +92,48 @@ Flags
 - `--no-fog` disable fog (agent has full map)
 - `--fog` enable fog (default if config has fog_radius > 0)
 - `--with-stats` use metrics-enabled search (nodes expanded, runtime, cost)
-- `--gui` accepted but not implemented yet (prints a notice)
+- `--gui` launches the GUI visualizer (requires pygame; see GUI section below)
+
+## Text visualization (ASCII)
+
+You can render a masked, text-based view of the grid with overlays (agent `@`, plan `*`) without installing pygame. This is useful when you want CLI output that steps through frames.
+
+Examples (from repo root):
+
+- `python -m examples.visualize_text --map maps/demo.csv --algo astar --steps 50 --delay 0.25`
+- Disable fog for a full-map run: `python -m examples.visualize_text --map maps/demo.csv --algo bfs --no-fog`
+
+Notes
+- Windows users can keep using PowerShell; commands above work the same.
+- A first-class `--text` CLI flag may be added later; for now, use the example module shown above.
+
+## GUI (optional)
+
+The Pygame-based visualizer is optional and kept separate so tests and headless usage don’t require pygame.
+
+Install (Windows PowerShell):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -WithGUI
+```
+
+Run (from repo root):
+
+- Via CLI (recommended):
+
+```powershell
+python -m src.main --gui
+```
+
+- Or the examples runner:
+
+```powershell
+python -m examples.run_visualize
+```
+
+Notes
+- If pygame is missing, the CLI will print a friendly message with an install hint.
+- Linux/macOS users can install GUI support with `WITH_GUI=1 ./scripts/setup.sh` and then run the same commands.
 
 Dev quickstart (Linux/macOS)
 - Setup virtual environment and install deps:
