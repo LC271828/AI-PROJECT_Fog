@@ -7,4 +7,3 @@ __pycache__/
 experiments/**/data/
 experiments/**/.ipynb_checkpoints/
 experiments/**/__pycache__/
-./maps

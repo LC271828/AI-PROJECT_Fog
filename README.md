@@ -31,7 +31,7 @@ Context
 
 Algorithms
 - Canonical API: neighbor-function search (plan on what you can see)
-- Functions: DFS, BFS, UCS, A* (Manhattan)
+- Functions: DFS, BFS, UCS, A* (Manhattan), Greedy Best-First
 - Agent re-plans when new cells are revealed, updating its known map and re-running search as needed
 
 PEAS (high-level)
@@ -99,7 +99,7 @@ Examples (from repo root):
 Flags
 - `--config` path to JSON config (default: `config.json`)
 - `--map` CSV map path (overrides config)
-- `--algo` one of bfs|dfs|ucs|astar (overrides config)
+- `--algo` one of bfs|dfs|ucs|astar|greedy (overrides config)
 - `--no-fog` disable fog (agent has full map)
 - `--fog` enable fog (default if config has fog_radius > 0)
 - `--with-stats` use metrics-enabled search (nodes expanded, runtime, cost)
@@ -221,7 +221,7 @@ print(len(path))  # None or steps
 
 Next steps (high level)
 1) Implement `src/grid.py` (CSV load, neighbors, visibility — no artificial borders)
-2) Implement `src/search.py` (DFS/BFS/UCS/A* via neighbor-function APIs + optional with-stats wrappers)
+2) Implement `src/search.py` (DFS/BFS/UCS/A*/Greedy via neighbor-function APIs + optional with-stats wrappers)
 3) Implement `src/agent.py` (OnlineAgent, re-planning, Metrics; build neighbors_fn from `grid.get_visible_neighbors`)
 4) Implement `src/main.py` (CLI) and optionally `src/visualize.py` (Pygame)
 5) Write tests in `tests/` after modules are ready

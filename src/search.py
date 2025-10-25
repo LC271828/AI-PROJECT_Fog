@@ -131,12 +131,41 @@ def astar_neighbors(start, goal, neighbors_fn, h=manhattan):
     return []
 
 
+# Greedy Best-First Search: prioritizes heuristic only (no g-cost)
+def greedy_neighbors(start, goal, neighbors_fn, h=manhattan):
+    """Greedy Best-First Search over a neighbor function.
+
+    Uses a priority queue ordered by h(n, goal) only. Not optimal in general,
+    but often fast to reach the goal in open spaces.
+
+    Returns a list of coordinates from start to goal (inclusive), or [] if no path exists.
+    """
+    frontier = []
+    heappush(frontier, (h(start, goal), start))
+    came_from = {}
+    visited = {start}
+
+    while frontier:
+        _, current = heappop(frontier)
+        if current == goal:
+            return reconstruct_path(came_from, start, goal)
+
+        for neighbor in neighbors_fn(current):
+            if neighbor in visited:
+                continue
+            visited.add(neighbor)
+            came_from[neighbor] = current
+            heappush(frontier, (h(neighbor, goal), neighbor))
+
+    return []
+
 # Export dictionary used by CLI/tests to select algorithms by name
 ALGORITHMS_NEIGHBORS = {
     "bfs": bfs_neighbors,
     "dfs": dfs_neighbors,
     "ucs": ucs_neighbors,
-    "astar": astar_neighbors
+    "astar": astar_neighbors,
+    "greedy": greedy_neighbors,
 }
 
 
@@ -191,4 +220,6 @@ ALGORITHMS_NEIGHBORS_WITH_STATS = {
     "dfs": dfs_neighbors_with_stats,
     "ucs": ucs_neighbors_with_stats,
     "astar": astar_neighbors_with_stats,
+    "greedy": lambda start, goal, neighbors_fn: _with_stats(greedy_neighbors, start, goal, neighbors_fn, h=manhattan),
 }
+

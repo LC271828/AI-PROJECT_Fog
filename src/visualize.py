@@ -507,8 +507,10 @@ def run_menu():
 	if not map_names:
 		map_names = ["(no maps found)"]
 
-	# gather algorithms
-	algos = sorted(list(SEARCH_ALGOS.keys()))
+	# gather algorithms directly from core mappings (includes greedy)
+	merged_plain = dict(SEARCH_ALGOS)
+	merged_stats = dict(SEARCH_ALGOS_WITH_STATS)
+	algos = sorted(list(merged_plain.keys()))
 	if not algos:
 		algos = ["(no algos)"]
 
@@ -601,7 +603,8 @@ def run_menu():
 						# show error briefly then continue
 						print(f"Failed to load map {selected_map}: {e}")
 						continue
-					search_fn = (SEARCH_ALGOS_WITH_STATS if with_stats else SEARCH_ALGOS).get(selected_algo)
+					# choose function from core maps (greedy included)
+					search_fn = (merged_stats if with_stats else merged_plain).get(selected_algo)
 					# full_map is inverse of fog_enabled
 					agent = OnlineAgent(grid, full_map=(not fog_enabled), search_algo=search_fn)
 					# annotate agent with algorithm name for HUD

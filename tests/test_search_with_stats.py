@@ -50,7 +50,7 @@ def test_stats_wrapper_path_matches_plain_version():
 
 @pytest.mark.skipif(not HAVE_NEIGHBOR_STATS, reason="Stats wrappers not available in src.search")
 def test_algorithms_neighbors_with_stats_mapping():
-    """Mapping should expose four algorithms with callable wrapper functions."""
+    """Mapping should expose algorithms with callable wrapper functions (including greedy)."""
     m = S.ALGORITHMS_NEIGHBORS_WITH_STATS
-    for k in ("bfs", "dfs", "ucs", "astar"):
+    for k in ("bfs", "dfs", "ucs", "astar", "greedy"):
         assert k in m and callable(m[k])

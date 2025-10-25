@@ -40,7 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
 	Flags
 	- --config: JSON config path (defaults used if missing)
 	- --map: CSV map path
-	- --algo: search algorithm name (bfs/dfs/ucs/astar)
+	- --algo: search algorithm name (bfs/dfs/ucs/astar [+ optional experimental like greedy])
 	- --gui: accept flag but GUI not implemented yet
 	- --no-fog/--fog: toggle fog; defaults based on config fog_radius
 	- --max-steps: cap number of agent steps
@@ -48,7 +48,9 @@ def build_parser() -> argparse.ArgumentParser:
 	p = argparse.ArgumentParser(prog="python -m src.main", description="Fog Maze")
 	p.add_argument("--config", type=str, default="config.json", help="Path to JSON config (default: config.json)")
 	p.add_argument("--map", dest="map_path", type=str, help="Path to CSV map (overrides config)")
-	p.add_argument("--algo", choices=sorted(SEARCH_ALGOS.keys()), help="Search algorithm (overrides config)")
+	# Algorithm choices are taken from the core mapping (includes bfs/dfs/ucs/astar/greedy)
+	_all_algos = sorted(SEARCH_ALGOS.keys())
+	p.add_argument("--algo", choices=_all_algos, help="Search algorithm (overrides config)")
 	p.add_argument("--with-stats", dest="with_stats", action="store_true", help="Use metrics-enabled search variant (nodes expanded, runtime, cost)")
 	p.add_argument("--gui", action="store_true", help="Launch GUI visualizer (requires pygame). If no flags are given, we try GUI by default.")
 	fog_group = p.add_mutually_exclusive_group()
@@ -100,7 +102,10 @@ def main(argv: list[str] | None = None) -> int:
 		print(f"Error: unknown --algo '{algo_name}'. Choose one of: {', '.join(sorted(SEARCH_ALGOS.keys()))}", file=sys.stderr)
 		return 2
 	# Leo: Choose stats-enabled wrapper when requested
-	search_fn = (SEARCH_ALGOS_WITH_STATS.get(algo_name) if args.with_stats else SEARCH_ALGOS.get(algo_name))
+	if args.with_stats:
+		search_fn = SEARCH_ALGOS_WITH_STATS.get(algo_name)
+	else:
+		search_fn = SEARCH_ALGOS.get(algo_name)
 
 	# Resolve fog vs full_map
 	# If --no-fog given => full_map=True

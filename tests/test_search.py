@@ -36,9 +36,9 @@ def test_neighbor_api_contract_exists():
 	assert isinstance(S.dfs_neighbors, types.FunctionType)
 	assert isinstance(S.ucs_neighbors, types.FunctionType)
 	assert isinstance(S.astar_neighbors, types.FunctionType)
-	# Mapping exists and contains the four algorithms
+	# Mapping exists and contains the algorithms (including greedy)
 	algos = S.ALGORITHMS_NEIGHBORS
-	assert set(algos.keys()) == {"bfs", "dfs", "ucs", "astar"}
+	assert set(algos.keys()) == {"bfs", "dfs", "ucs", "astar", "greedy"}
 
 
 def _grid_neighbors(width: int, height: int, walls: set[tuple[int, int]]):
