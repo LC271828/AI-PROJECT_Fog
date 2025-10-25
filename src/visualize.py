@@ -60,6 +60,7 @@ from pathlib import Path
 from src.grid import Grid
 from src.agent import OnlineAgent
 from src.search import ALGORITHMS_NEIGHBORS as SEARCH_ALGOS
+from src.search import ALGORITHMS_NEIGHBORS_WITH_STATS as SEARCH_ALGOS_WITH_STATS
 
 # Maximum FPS cap for GUI. Increase if you want faster stepping on large maps.
 MAX_FPS = 1000
@@ -242,7 +243,7 @@ def visualize(agent: OnlineAgent, grid: Grid, cell_size: int = 24, fps: int = 10
 		# Fixed window dimensions
 		WINDOW_WIDTH = 1280
 		WINDOW_HEIGHT = 720
-		STATS_HEIGHT = 60  # pixels for stats area
+		STATS_HEIGHT = 120  # pixels for stats area (expanded to fit more HUD lines)
 		STEPS_WIDTH = 120  # pixels for step counter panel
 		
 		# Calculate available space for maze
@@ -364,23 +365,55 @@ def visualize(agent: OnlineAgent, grid: Grid, cell_size: int = 24, fps: int = 10
 			
 			# Stats/HUD in dedicated top panel
 			if font is not None:
-				# Top stats in three columns
-				# Left column
+				# Derive helpful labels
+				# Map name (set by menu) and algorithm
+				map_name = getattr(grid, "map_name", None) or getattr(grid, "name", None) or "(unknown map)"
+				# Try to use an explicit search_name if provided; else try to infer from SEARCH_ALGOS or function __name__
+				algo_name = getattr(agent, "search_name", None)
+				if not algo_name:
+					try:
+						algo_fn = getattr(agent, "search", None)
+						algo_name = next((k for k, v in SEARCH_ALGOS.items() if v is algo_fn), None)
+						if not algo_name and hasattr(algo_fn, "__name__"):
+							algo_name = getattr(algo_fn, "__name__")
+					except Exception:
+						algo_name = None
+				algo_name = algo_name or "(unknown algo)"
+
+				# Live metrics (robust to missing fields)
+				m = getattr(agent, "metrics", None)
+				steps = getattr(m, "steps", 0) if m is not None else 0
+				replans = getattr(m, "replans", 0) if m is not None else 0
+				nodes = getattr(m, "nodes_expanded", 0) if m is not None else 0
+				# Display a live cumulative cost based on path length to avoid depending on the last search plan cost
+				path_len = len(getattr(m, "path_taken", []) or []) if m is not None else 0
+				cost = max(0, path_len - 1)
+				runtime = getattr(m, "runtime", 0.0) if m is not None else 0.0
+
+				# Top stats in three columns (multiple lines supported by taller STATS_HEIGHT)
+				# Left column: map/algo/fog
 				left_lines = [
-					f"Position: {getattr(agent, 'current', None)}",
-					f"Plan length: {len(getattr(agent, 'current_plan', []) or [])}"
+					f"Map: {map_name}",
+					f"Algo: {algo_name}",
+					f"Fog: {'Off' if getattr(agent, 'full_map', False) else 'On'}",
 				]
-				
-				# Center column
+
+				# Center column: start/goal/size
 				center_lines = [
 					f"Start: {getattr(grid, 'start', None)}",
-					f"Goal: {getattr(grid, 'goal', None)}"
+					f"Goal: {getattr(grid, 'goal', None)}",
+					f"Size: {cols}x{rows}",
 				]
-				
-				# Right column
+
+				# Right column: live stats + status
+				status_str = (
+					"Finished — ESC to exit" if finished else ("Paused" if paused else "Running")
+				)
 				right_lines = [
-					f"FPS: {fps}",
-					"Space: pause/play" if not finished else "Finished — ESC to exit"
+					f"Steps: {steps}   Replans: {replans}",
+					f"Nodes: {nodes}   Cost: {cost}",
+					f"Runtime: {runtime:.3f}s   FPS: {fps}",
+					status_str,
 				]
 				
 				# Draw left column
@@ -484,6 +517,7 @@ def run_menu():
 	focus = 0  # 0 = maps, 1 = algos
 	fps_init = 8  # allow adjusting initial FPS from the menu with +/- or 'F' to edit
 	fog_enabled = True  # default like CLI (fog on); toggle with 'V'
+	with_stats = False  # toggle metrics-enabled search wrappers with 'T'
 	# Simple inline editor state for FPS numeric entry
 	editing_fps = False
 	fps_buffer = ""
@@ -549,6 +583,9 @@ def run_menu():
 					fps_init = min(MAX_FPS, fps_init + 1)
 				if event.key == pygame.K_MINUS:
 					fps_init = max(1, fps_init - 1)
+				if event.key == pygame.K_t:
+					# toggle stats-enabled search variants
+					with_stats = not with_stats
 				if event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
 					# launch visualizer with current selection
 					if not map_files:
@@ -558,13 +595,17 @@ def run_menu():
 					# build grid and agent
 					try:
 						grid = Grid.from_csv(selected_map)
+						# annotate grid with a friendly name for HUD
+						setattr(grid, "map_name", selected_map.name)
 					except Exception as e:
 						# show error briefly then continue
 						print(f"Failed to load map {selected_map}: {e}")
 						continue
-					search_fn = SEARCH_ALGOS.get(selected_algo)
+					search_fn = (SEARCH_ALGOS_WITH_STATS if with_stats else SEARCH_ALGOS).get(selected_algo)
 					# full_map is inverse of fog_enabled
 					agent = OnlineAgent(grid, full_map=(not fog_enabled), search_algo=search_fn)
+					# annotate agent with algorithm name for HUD
+					setattr(agent, "search_name", selected_algo + ("+stats" if with_stats else ""))
 					# run visualize (blocking) and then return to menu when it exits
 					visualize(agent, grid, cell_size=24, fps=fps_init)
 
@@ -609,7 +650,7 @@ def run_menu():
 		screen.blit(instr_fog, (20, WINDOW_HEIGHT - 70))
 		instr1 = font.render("Up/Down: select  Tab: switch column  Enter: run  Esc: quit", True, (150, 150, 150))
 		screen.blit(instr1, (20, WINDOW_HEIGHT - 50))
-		instr2 = font.render(f"FPS: {fps_init}  (+/- to change, F to type)", True, (150, 150, 150))
+		instr2 = font.render(f"FPS: {fps_init}  (+/- to change, F to type)   Metrics: {'On' if with_stats else 'Off'} (T)", True, (150, 150, 150))
 		screen.blit(instr2, (20, WINDOW_HEIGHT - 30))
 
 		# Draw inline FPS editor overlay if active

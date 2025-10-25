@@ -155,6 +155,9 @@ class OnlineAgent:
 
 		self.metrics = Metrics(start=self.start, goal=self.goal)
 		self.current_plan: List[Coord] = []
+		# Track planning state for more intuitive 'replans' semantics
+		self._has_planned_once: bool = False
+		self._suppress_next_replan_increment: bool = False
 
 	# --- perception helpers (experimental wrappers around Grid) ---
 	def _in_bounds(self, pos: Coord) -> bool:
@@ -268,7 +271,13 @@ class OnlineAgent:
 			# Try plan to goal
 			path = self.plan_to(self.goal)
 			if path:
+				# Count a replan whenever we compute a new plan after the initial
+				if self._has_planned_once and not self._suppress_next_replan_increment:
+					self.metrics.replans += 1
+				# reset suppression flag (it only applies to the first plan after a wall-triggered replan)
+				self._suppress_next_replan_increment = False
 				self.current_plan = path
+				self._has_planned_once = True
 			else:
 				# choose frontier and plan to it
 				frontier = self.choose_frontier()
@@ -277,7 +286,11 @@ class OnlineAgent:
 					return False
 				plan = self.plan_to(frontier)
 				if plan:
+					if self._has_planned_once and not self._suppress_next_replan_increment:
+						self.metrics.replans += 1
+					self._suppress_next_replan_increment = False
 					self.current_plan = plan
+					self._has_planned_once = True
 				else:
 					return False
 
@@ -287,12 +300,17 @@ class OnlineAgent:
 			# if next_pos became a known wall in the meantime, replan
 			if next_pos in self.known_walls:
 				self.metrics.replans += 1
+				# suppress counting the immediate follow-up planning as an additional replan
+				self._suppress_next_replan_increment = True
 				self.current_plan = []
 				return True
 			# move
 			self.current = next_pos
 			self.metrics.steps += 1
 			self.metrics.path_taken.append(self.current)
+			# update cumulative cost live (unit-cost map)
+			if self.metrics.path_taken:
+				self.metrics.cost = max(0, len(self.metrics.path_taken) - 1)
 			# drop the executed step from plan
 			self.current_plan = self.current_plan[1:]
 			# perceive again after moving
