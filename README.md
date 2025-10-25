@@ -69,6 +69,15 @@ We moved demos into `examples/` so they're easy to find and runnable as modules.
 	- Run via CLI: `python -m src.main --gui`
 	- Or run the examples runner: `python -m examples.run_visualize`
 
+## Interactive TUI (no flags)
+
+With no flags and in an interactive terminal, running `python -m src.main` brings up a small menu:
+
+- Choose mode: GUI (pygame) or Text (ASCII)
+- If Text: pick a map (from `maps/*.csv`), algorithm, fog on/off, steps, delay, and with-stats
+
+If pygame isn’t installed and you pick GUI, it falls back cleanly to Text mode.
+
 Tips
 - Run from the repository root so `src/` is on the import path.
 - Alternatively, you can run them directly: `python examples/demo_grid.py`.
@@ -77,6 +86,8 @@ Tips
      Dev quickstart (Windows) under the Optional GUI bullet to avoid confusion. -->
 
 ## Headless CLI
+
+By default (when run with no flags), the project will open a TUI menu (on interactive terminals) or try GUI directly; if GUI isn’t available, it falls back to the headless CLI.
 
 You can run a minimal headless CLI that loads `config.json` (overridden by flags), runs the agent, and prints metrics.
 
@@ -92,7 +103,7 @@ Flags
 - `--no-fog` disable fog (agent has full map)
 - `--fog` enable fog (default if config has fog_radius > 0)
 - `--with-stats` use metrics-enabled search (nodes expanded, runtime, cost)
-- `--gui` launches the GUI visualizer (requires pygame; see GUI section below)
+- `--gui` launches the GUI visualizer (requires pygame; see GUI section below). When no flags are given, you’ll get a TUI on interactive terminals.
 
 ## Text visualization (ASCII)
 
@@ -105,7 +116,7 @@ Examples (from repo root):
 
 Notes
 - Windows users can keep using PowerShell; commands above work the same.
-- A first-class `--text` CLI flag may be added later; for now, use the example module shown above.
+- The interactive TUI uses the official `src.textviz` under the hood. For non-interactive runs, use the example module above or call `src.textviz.run_text_session` from your own scripts.
 
 ## GUI (optional)
 
@@ -115,6 +126,12 @@ Install (Windows PowerShell):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -WithGUI
+```
+
+Alternatively (any platform):
+
+```powershell
+python -m pip install pygame
 ```
 
 Run (from repo root):

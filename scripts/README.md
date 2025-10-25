@@ -6,8 +6,10 @@ TL;DR (Windows, from repo root)
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1          # venv + core deps
 powershell -ExecutionPolicy Bypass -File .\scripts\test.ps1           # run pytest (verbose + rich summary)
-# Optional
+# Optional (GUI)
 powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -WithGUI # add pygame (GUI work)
+# Or install pygame directly (any platform):
+python -m pip install pygame
 ```
 
 TL;DR (Linux/macOS)

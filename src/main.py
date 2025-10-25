@@ -45,12 +45,12 @@ def build_parser() -> argparse.ArgumentParser:
 	- --no-fog/--fog: toggle fog; defaults based on config fog_radius
 	- --max-steps: cap number of agent steps
 	"""
-	p = argparse.ArgumentParser(prog="python -m src.main", description="Fog Maze (headless)")
+	p = argparse.ArgumentParser(prog="python -m src.main", description="Fog Maze")
 	p.add_argument("--config", type=str, default="config.json", help="Path to JSON config (default: config.json)")
 	p.add_argument("--map", dest="map_path", type=str, help="Path to CSV map (overrides config)")
 	p.add_argument("--algo", choices=sorted(SEARCH_ALGOS.keys()), help="Search algorithm (overrides config)")
 	p.add_argument("--with-stats", dest="with_stats", action="store_true", help="Use metrics-enabled search variant (nodes expanded, runtime, cost)")
-	p.add_argument("--gui", action="store_true", help="Launch GUI visualizer (requires pygame; optional)")
+	p.add_argument("--gui", action="store_true", help="Launch GUI visualizer (requires pygame). If no flags are given, we try GUI by default.")
 	fog_group = p.add_mutually_exclusive_group()
 	fog_group.add_argument("--no-fog", dest="no_fog", action="store_true", help="Disable fog (agent has full map)")
 	fog_group.add_argument("--fog", dest="fog", action="store_true", help="Enable fog (default if config sets fog_radius > 0)")
@@ -64,6 +64,30 @@ def main(argv: list[str] | None = None) -> int:
 
 	# Load defaults from config.json
 	cfg = load_config(Path(args.config))
+    
+	# Decide default mode: if user gave no specific flags, prefer GUI when available.
+	user_specified_mode = any([
+		args.gui,
+		args.with_stats,
+		bool(args.map_path),
+		bool(args.algo),
+		args.no_fog,
+		args.fog,
+	])
+
+	if not user_specified_mode:
+		# If interactive TTY: present a small TUI to choose GUI or Text. Else, try GUI.
+		try:
+			if sys.stdin.isatty():
+				from src.tui import run_interactive
+				return run_interactive()
+			else:
+				from src.visualize import run_menu  # lazy import; raises if pygame missing
+				run_menu()
+				return 0
+		except Exception:
+			# Fall back to headless without failing; continue to construct Grid/Agent below.
+			print("Note: GUI/TUI not available. Falling back to headless CLI.")
 	# Resolve map
 	map_path = Path(args.map_path or cfg.get("map", "maps/demo.csv"))
 	if not map_path.exists():

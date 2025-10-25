@@ -161,11 +161,22 @@ Plan under fog
 
 - Optional Pygame view: shows fog mask, visible walls, agent, and planned path.
 
+Run modes overview
+- Default (no flags, interactive terminal): a small TUI asks whether to run GUI (pygame) or Text (ASCII). If GUI is chosen but pygame is not installed, it falls back to Text.
+- Explicit GUI: `python -m src.main --gui` (requires pygame).
+- Headless CLI: pass flags like `--map`, `--algo`, `--no-fog`, `--with-stats` to run without visualization and print metrics.
+
+Official text visualization
+- Module: `src.textviz`
+- API: `render_masked(grid, agent_pos, plan)` and `run_text_session(map, algo, steps, delay, full_map, with_stats)`
+- The TUI uses `src.textviz` internally for Text mode. You can also call it directly from scripts.
+
 ## CLI (src/main.py)
 
 - load_config() -> dict
 - main(argv) -> int
-- Args: --map, --algo, --gui, --fog (use 1 in this project)
+- Args: --map, --algo, --gui, --fog, --with-stats
+- Behavior: If no flags and stdin is interactive, show the TUI (choose GUI/Text and options). If not interactive, attempt GUI by default; if unavailable, fall back to headless.
 
 ## Consistency checklist
 

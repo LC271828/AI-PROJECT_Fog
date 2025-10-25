@@ -6,7 +6,7 @@ Purpose:
 """
 from pathlib import Path
 
-from examples.visualize_text import render_masked
+from src.textviz import render_masked
 from src.grid import Grid
 from src.agent import OnlineAgent
 from src.search import ALGORITHMS_NEIGHBORS as SEARCH_ALGOS
