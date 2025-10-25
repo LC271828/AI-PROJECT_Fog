@@ -15,6 +15,8 @@ from pathlib import Path
 from src.grid import Grid
 from src.agent import OnlineAgent
 from src.search import ALGORITHMS_NEIGHBORS as SEARCH_ALGOS
+# Leo: allow opting into with-stats search wrappers
+from src.search import ALGORITHMS_NEIGHBORS_WITH_STATS as SEARCH_ALGOS_WITH_STATS
 
 
 def load_config(path: Path) -> dict:
@@ -47,6 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
 	p.add_argument("--config", type=str, default="config.json", help="Path to JSON config (default: config.json)")
 	p.add_argument("--map", dest="map_path", type=str, help="Path to CSV map (overrides config)")
 	p.add_argument("--algo", choices=sorted(SEARCH_ALGOS.keys()), help="Search algorithm (overrides config)")
+	p.add_argument("--with-stats", dest="with_stats", action="store_true", help="Use metrics-enabled search variant (nodes expanded, runtime, cost)")
 	p.add_argument("--gui", action="store_true", help="Run GUI (optional; not implemented yet)")
 	fog_group = p.add_mutually_exclusive_group()
 	fog_group.add_argument("--no-fog", dest="no_fog", action="store_true", help="Disable fog (agent has full map)")
@@ -72,7 +75,8 @@ def main(argv: list[str] | None = None) -> int:
 	if algo_name not in SEARCH_ALGOS:
 		print(f"Error: unknown --algo '{algo_name}'. Choose one of: {', '.join(sorted(SEARCH_ALGOS.keys()))}", file=sys.stderr)
 		return 2
-	search_fn = SEARCH_ALGOS[algo_name]
+	# Leo: Choose stats-enabled wrapper when requested
+	search_fn = (SEARCH_ALGOS_WITH_STATS.get(algo_name) if args.with_stats else SEARCH_ALGOS.get(algo_name))
 
 	# Resolve fog vs full_map
 	# If --no-fog given => full_map=True

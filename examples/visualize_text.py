@@ -8,6 +8,7 @@ from typing import Iterable, Tuple, List
 from src.grid import Grid
 from src.agent import OnlineAgent
 from src.search import ALGORITHMS_NEIGHBORS as SEARCH_ALGOS
+from src.search import ALGORITHMS_NEIGHBORS_WITH_STATS as SEARCH_ALGOS_WITH_STATS  # Leo: optional stats
 
 Coord = Tuple[int, int]
 
@@ -53,6 +54,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--steps", type=int, default=50, help="Number of steps to simulate")
     p.add_argument("--delay", type=float, default=0.25, help="Delay between frames (seconds)")
     p.add_argument("--no-fog", dest="no_fog", action="store_true", help="Disable fog (full map)")
+    p.add_argument("--with-stats", dest="with_stats", action="store_true", help="Use metrics-enabled search variant")
     return p
 
 
@@ -64,12 +66,13 @@ def main() -> None:
         raise SystemExit(f"Map not found: {map_path}")
 
     grid = Grid.from_csv(map_path)
-    search_fn = SEARCH_ALGOS[args.algo]
+    # Leo: route to stats-enabled wrapper when requested
+    search_fn = (SEARCH_ALGOS_WITH_STATS.get(args.algo) if args.with_stats else SEARCH_ALGOS.get(args.algo))
 
     full_map = bool(args.no_fog)
     agent = OnlineAgent(grid, full_map=full_map, search_algo=search_fn)
 
-    print(f"Algo={args.algo} | full_map={full_map} | steps={args.steps} | delay={args.delay}s")
+    print(f"Algo={args.algo} | with_stats={args.with_stats} | full_map={full_map} | steps={args.steps} | delay={args.delay}s")
     print("Initial state (after initial reveal if fogged):")
     print(render_masked(grid, agent.current, getattr(agent, "current_plan", None)))
     print("\n---\n")
