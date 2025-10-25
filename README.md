@@ -152,6 +152,31 @@ Notes
 - If pygame is missing, the CLI will print a friendly message with an install hint.
 - Linux/macOS users can install GUI support with `WITH_GUI=1 ./scripts/setup.sh` and then run the same commands.
 
+### GUI controls and HUD
+
+- Menu
+	- Up/Down: select map/algorithm (Tab switches column)
+	- V: toggle Fog On/Off (Fog Off = full-map, like `--no-fog` in CLI)
+	- + / -: adjust initial FPS (F to type a number directly, Enter to apply)
+	- T: toggle metrics-enabled search (shows Nodes expanded + Runtime)
+	- Enter: launch visualizer; Esc: quit menu
+
+- Visualizer
+	- Space: pause/play
+	- N: single-step while paused
+	- + / -: adjust FPS on the fly
+	- Left/Right: navigate step history (when available); the left panel shows the counter
+	- ESC or window close: exit
+
+- HUD (top bar)
+	- Left: Map name, Algorithm, Fog status
+	- Center: Start, Goal, Grid size
+	- Right: Steps, Replans, Nodes expanded (with stats on), Cost (cumulative), Runtime, FPS, and status
+
+Rendering
+- With fog: only visible tiles are shown; path taken and current plan are overlaid
+- No fog: the entire map is drawn; overlays still show agent path and plan
+
 Dev quickstart (Linux/macOS)
 - Setup virtual environment and install deps:
 	- `./scripts/setup.sh` (or `WITH_GUI=1 ./scripts/setup.sh` to add pygame)
