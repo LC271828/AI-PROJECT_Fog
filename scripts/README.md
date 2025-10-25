@@ -40,6 +40,17 @@ This folder contains:
 - `commit.ps1` — Stage, commit, and push current HEAD to remote `dev`.
 - `create_issues_from_config.ps1` — Reads a JSON config and creates/updates issues idempotently.
 - `issues.json` — Repository slug, labels to ensure exist, and the list of issues to create/update.
+- `maze_gen.py` — Generate large maze CSVs (odd sizes recommended). Example:
+
+```powershell
+python scripts/maze_gen.py --width 101 --height 101 --braid 0.10 --seed 42 --out maps/maze_101x101_b10.csv
+```
+
+Flags:
+- `--width/--height`: dimensions (will be coerced to odd numbers)
+- `--braid`: fraction of dead-ends to convert into loops (0.0 = perfect maze; 0.1–0.2 adds interesting branches)
+- `--seed`: RNG seed for reproducibility
+- `--out`: output CSV path (defaults to maps/maze_<WxH>_bXX.csv)
 
 Notes for Linux users
 - You don’t need the Windows PowerShell scripts; use `setup.sh` and `test.sh` above.
