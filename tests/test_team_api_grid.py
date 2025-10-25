@@ -1,3 +1,9 @@
+"""TEAM_API contract test for the Grid.
+
+Purpose:
+- Construct a Grid via preferred classmethod (with fallback) and assert required
+    fields and methods exist with plausible shapes.
+"""
 import inspect
 from pathlib import Path
 
@@ -31,6 +37,7 @@ def _load_grid():
 
 
 def test_grid_api_contract_fields_and_methods():
+    """Grid should expose core fields and callable methods per TEAM_API."""
     from src.grid import Grid
 
     # class exists

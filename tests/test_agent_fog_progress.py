@@ -1,3 +1,10 @@
+"""Agent fog progression tests.
+
+Purpose:
+- Ensure that under fog, visibility never shrinks (no re-fogging) and typically grows
+    as the agent steps.
+- Sanity-check that the agent's recorded path length matches its step counter.
+"""
 from pathlib import Path
 
 from src.grid import Grid
@@ -6,6 +13,7 @@ from src.search import ALGORITHMS_NEIGHBORS as SEARCH_ALGOS
 
 
 def test_agent_reveals_more_over_time_under_fog():
+    """Stepping a few times under fog should monotonically increase visibility."""
     repo_root = Path(__file__).resolve().parents[1]
     demo_map = repo_root / "maps" / "demo.csv"
 

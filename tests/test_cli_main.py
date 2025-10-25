@@ -1,3 +1,9 @@
+"""CLI smoke test with metrics parsing.
+
+Purpose:
+- Run the headless CLI over a small map and assert it prints expected metrics.
+- Exercise both plain and with-stats modes to validate shape and basic values.
+"""
 import re
 from pathlib import Path
 
@@ -23,6 +29,7 @@ def _parse_metrics(out: str):
 
 @pytest.mark.parametrize("with_stats", [False, True])
 def test_cli_runs_and_prints_metrics(capsys, with_stats):
+    """CLI should exit 0 and print numeric metrics; with-stats adds expansions/runtime."""
     repo_root = Path(__file__).resolve().parents[1]
     demo_map = repo_root / "maps" / "demo.csv"
 

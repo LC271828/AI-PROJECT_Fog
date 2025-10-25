@@ -31,6 +31,7 @@ def _full_neighbors(g):
 
 
 def test_offline_search_finds_no_path_boxed_start():
+    """All search algorithms should return [] on a fully boxed start/goal map."""
     import src.search as S
     g = _load()
     n = _full_neighbors(g)
@@ -40,6 +41,7 @@ def test_offline_search_finds_no_path_boxed_start():
 
 
 def test_agent_no_fog_stops_immediately_boxed_start():
+    """In no-fog mode, agent should detect no plan and remain at start (0 steps)."""
     import src.search as S
     from src.agent import OnlineAgent
 
@@ -53,6 +55,7 @@ def test_agent_no_fog_stops_immediately_boxed_start():
 
 
 def test_agent_fog_stops_immediately_boxed_start():
+    """Under fog, agent should reveal walls and stop without moving (no frontier)."""
     import src.search as S
     from src.agent import OnlineAgent
 

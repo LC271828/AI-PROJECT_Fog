@@ -40,9 +40,9 @@ def _full_neighbors(g: Grid):
 
 @pytest.mark.parametrize("map_rel", MAPS, ids=lambda p: Path(p).stem)
 def test_fog_agent_reaches_goal_within_budget(map_rel):
-    """Under fog, agent should reach the goal within a generous budget.
+    """Under fog, reach goal within a generous budget.
 
-    Budget strategy: baseline_cost * 5 + 50 (cap to a minimum of 100) to avoid flakiness.
+    Rationale: Use baseline_cost * 5 + 50 (min 100) to avoid flakiness on backtracking maps.
     """
     logger = logging.getLogger(__name__)
     repo_root = Path(__file__).resolve().parents[1]

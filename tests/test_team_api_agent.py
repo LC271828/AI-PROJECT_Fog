@@ -1,3 +1,9 @@
+"""TEAM_API contract test for the Agent.
+
+Purpose:
+- Verify that OnlineAgent and Metrics exist and that run() returns a Metrics-like object
+    with the expected fields after a short execution.
+"""
 from pathlib import Path
 import types
 
@@ -5,6 +11,7 @@ import pytest
 
 
 def test_agent_api_contract_exists_and_runs():
+    """Ensure agent and metrics classes exist and are minimally functional."""
     # Import OnlineAgent and Metrics
     import src.agent as A
     assert hasattr(A, "OnlineAgent"), "src.agent.OnlineAgent missing"

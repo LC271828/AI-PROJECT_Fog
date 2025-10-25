@@ -1,9 +1,17 @@
+"""Fog visibility rule tests.
+
+Purpose:
+- Adjacent walls become visible but remain impassable and excluded from visible neighbors.
+- Visible neighbors are both visible and passable.
+- Visibility is persistent (no re-fogging when revealing again).
+"""
 from pathlib import Path
 
 from src.grid import Grid
 
 
 def test_walls_become_visible_but_not_passable():
+    """Walls next to the start should appear in visibility but not be passable or neighbor candidates."""
     repo_root = Path(__file__).resolve().parents[1]
     demo_map = repo_root / "maps" / "demo.csv"
     g = Grid.from_csv(demo_map)
@@ -25,6 +33,7 @@ def test_walls_become_visible_but_not_passable():
 
 
 def test_visible_neighbors_only_visible_and_passable():
+    """After reveal, all visible neighbors returned must also be passable."""
     repo_root = Path(__file__).resolve().parents[1]
     demo_map = repo_root / "maps" / "demo.csv"
     g = Grid.from_csv(demo_map)
@@ -43,6 +52,7 @@ def test_visible_neighbors_only_visible_and_passable():
 
 
 def test_no_refogging_cells_stay_visible():
+    """Revealing again never hides previously visible tiles (no re-fogging)."""
     repo_root = Path(__file__).resolve().parents[1]
     demo_map = repo_root / "maps" / "demo.csv"
     g = Grid.from_csv(demo_map)

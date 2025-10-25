@@ -1,3 +1,9 @@
+"""Text visualization plan overlay tests.
+
+Purpose:
+- Ensure the plan overlay draws a marker on a visible, passable neighbor and
+    respects base symbols (does not overwrite S/G/@).
+"""
 from pathlib import Path
 
 from examples.visualize_text import render_masked
@@ -5,6 +11,7 @@ from src.grid import Grid
 
 
 def test_plan_overlay_draws_star_on_visible_free_cell():
+    """Overlay should include '*' on a visible, passable neighbor from start."""
     repo_root = Path(__file__).resolve().parents[1]
     demo_map = repo_root / "maps" / "demo.csv"
     g = Grid.from_csv(demo_map)
