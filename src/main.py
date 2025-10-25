@@ -50,7 +50,7 @@ def build_parser() -> argparse.ArgumentParser:
 	p.add_argument("--map", dest="map_path", type=str, help="Path to CSV map (overrides config)")
 	p.add_argument("--algo", choices=sorted(SEARCH_ALGOS.keys()), help="Search algorithm (overrides config)")
 	p.add_argument("--with-stats", dest="with_stats", action="store_true", help="Use metrics-enabled search variant (nodes expanded, runtime, cost)")
-	p.add_argument("--gui", action="store_true", help="Run GUI (optional; not implemented yet)")
+	p.add_argument("--gui", action="store_true", help="Launch GUI visualizer (requires pygame; optional)")
 	fog_group = p.add_mutually_exclusive_group()
 	fog_group.add_argument("--no-fog", dest="no_fog", action="store_true", help="Disable fog (agent has full map)")
 	fog_group.add_argument("--fog", dest="fog", action="store_true", help="Enable fog (default if config sets fog_radius > 0)")
@@ -91,9 +91,20 @@ def main(argv: list[str] | None = None) -> int:
 		fog_enabled = cfg_fog_radius > 0
 	full_map = not fog_enabled
 
-	# GUI flag (not implemented yet)
+	# GUI mode (optional). If requested either via flag or config, launch the GUI and return.
 	if args.gui or cfg.get("gui", False):
-		print("Note: --gui requested but visualization is not implemented yet. Running headless.")
+		try:
+			from src.visualize import run_menu  # lazy import; visualize handles pygame optionality
+		except Exception as e:
+			print(
+				"Error: GUI requested but could not import visualizer.\n"
+				"Install pygame via:\n  powershell -ExecutionPolicy Bypass -File .\\scripts\\setup.ps1 -WithGUI",
+				file=sys.stderr,
+			)
+			return 2
+		# Launch menu (blocks until exit), then return 0
+		run_menu()
+		return 0
 
 	# Construct Grid and Agent
 	try:

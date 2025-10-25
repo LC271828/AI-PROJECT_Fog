@@ -52,17 +52,35 @@ Usage examples (from repo root, optional)
 """
 
 # Thomz: text-only renderer exists at examples/visualize_text.py; use that for quick tests.
-# The stubs below sketch a pygame API without enforcing pygame at import-time.
+# IMPORTANT: Pygame is optional. We import it lazily inside functions so that
+# importing this module does not require pygame to be installed.
 
-import pygame
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Any
 from pathlib import Path
 from src.grid import Grid
 from src.agent import OnlineAgent
 from src.search import ALGORITHMS_NEIGHBORS as SEARCH_ALGOS
 
 
-def draw_frame(screen: "pygame.Surface", grid: Grid, agent: OnlineAgent, cell_size: int = 24, show_grid: bool = True):
+def _require_pygame():
+	"""Import pygame lazily and return the module.
+
+	Raises a clear, user-friendly error if pygame is not installed, including
+	guidance on how to install it using the project scripts.
+	"""
+	try:
+		import pygame as _pg  # type: ignore
+		return _pg
+	except Exception as e:  # pragma: no cover - exercised in manual runs
+		raise RuntimeError(
+			"Pygame is required for the GUI visualizer but is not installed.\n"
+			"Install it with:\n  powershell -ExecutionPolicy Bypass -File .\\scripts\\setup.ps1 -WithGUI\n"
+			"Or\n  python -m pip install pygame\n"
+			"Then re-run the visualizer."
+		) from e
+
+
+def draw_frame(screen: Any, grid: Grid, agent: OnlineAgent, cell_size: int = 24, show_grid: bool = True):
 		"""Draw a single frame onto an existing pygame screen.
 
 		Contract
@@ -72,8 +90,8 @@ def draw_frame(screen: "pygame.Surface", grid: Grid, agent: OnlineAgent, cell_si
 
 		TODO(Thomz): implement with pygame; placeholder is a no-op to keep CI green.
 		"""
-		# pygame is imported at module level (hard-coded import). If pygame is missing
-		# the import will fail here.
+		# Import pygame lazily
+		pygame = _require_pygame()
 
 		# Colors
 		FOG = (50, 150, 50)
@@ -181,8 +199,8 @@ def visualize(agent: OnlineAgent, grid: Grid, cell_size: int = 24, fps: int = 10
 
 		TODO(Thomz): implement with pygame; placeholder returns None to keep optional.
 		"""
-		# pygame is imported at module level (hard-coded import). If pygame is missing
-		# the import will raise at module import time.
+		# Import pygame lazily
+		pygame = _require_pygame()
 
 		# Initialize pygame only if it isn't already initialized. When called from
 		# the menu (which already calls pygame.init()) we want to preserve the
@@ -402,6 +420,9 @@ def run_menu():
 	Controls: Up/Down to move, Tab to switch focus (maps/algos), Enter to run,
 	Esc to quit.
 	"""
+	# Import pygame lazily
+	pygame = _require_pygame()
+
 	# menu constants
 	WINDOW_WIDTH = 1280
 	WINDOW_HEIGHT = 720
@@ -417,7 +438,7 @@ def run_menu():
 		pygame.display.set_caption("Fog Maze - Menu")
 		clock = pygame.time.Clock()
 	except Exception:
-		# If pygame isn't available or fails, abort to avoid crashing tests.
+		# If pygame initialization fails, abort gracefully.
 		return
 
 	# gather maps
