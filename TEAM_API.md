@@ -22,7 +22,7 @@ This file explains how our code works together. It uses short, simple sentences.
 What we are building
 - A grid (CSV map) with fog-of-war.
 - An agent that can see radius 1 (up/down/left/right), moves step by step, and re-plans.
-- Search algorithms: DFS, BFS, UCS, A* (Manhattan).
+- Search algorithms: DFS, BFS, UCS, A* (Manhattan), Greedy Best-First.
 - Optional GUI.
 
 Quick start
@@ -128,7 +128,7 @@ print(res.nodes_expanded, res.runtime, res.cost)
 Notes
 - Algorithms must not change the Grid.
 - If start == goal → return [start]. If start/goal is not passable → return [].
-- Provide a mapping like ALGORITHMS_NEIGHBORS = {"bfs": bfs_neighbors, "dfs": dfs_neighbors, "ucs": ucs_neighbors, "astar": astar_neighbors}
+- Provide a mapping like ALGORITHMS_NEIGHBORS = {"bfs": bfs_neighbors, "dfs": dfs_neighbors, "ucs": ucs_neighbors, "astar": astar_neighbors, "greedy": greedy_neighbors}
 
 Optional: offline baseline (no fog)
 - You may create a tiny wrapper for offline tests:

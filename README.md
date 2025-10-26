@@ -69,6 +69,29 @@ We moved demos into `examples/` so they're easy to find and runnable as modules.
 	- Run via CLI: `python -m src.main --gui`
 	- Or run the examples runner: `python -m examples.run_visualize`
 
+## Benchmarks (scaling and comparisons)
+
+We provide a simple benchmark runner that generates mazes of increasing sizes, runs algorithms with and without fog, and logs metrics to a CSV. This is useful for documentation, comparing scaling, and producing plots.
+
+Quick examples (Windows PowerShell):
+
+```powershell
+# Sweep sizes 51..151 (step 50), 3 seeds, braid 0.10, both modes; write CSV
+python scripts/bench.py --min 51 --max 151 --step 50 --seeds 3 --braid 0.10 --out reports/bench.csv
+
+# Subset of algos, only no-fog, 2 seeds
+python scripts/bench.py --algos bfs astar greedy --modes no-fog --min 51 --max 151 --step 50 --seeds 2 -o reports/bench_subset.csv
+```
+
+Columns in CSV
+- width, height, algo, mode (fog/no-fog), seed, braid
+- reached (bool), steps, cost, replans
+- nodes (expanded), runtime_sec
+
+Notes
+- The runner uses the stats-enabled search wrappers, so runtime and nodes are per algorithm.
+- For O(n)-style trends, plot nodes or runtime vs width×height (free cells correlate closely). BFS/UCS/A* are O(V+E) and typically scale near-linearly on grid mazes; Greedy may expand fewer nodes in open rooms but can detour in mazes.
+
 ## Interactive TUI (no flags)
 
 With no flags and in an interactive terminal, running `python -m src.main` brings up a small menu:
@@ -176,6 +199,20 @@ Notes
 Rendering
 - With fog: only visible tiles are shown; path taken and current plan are overlaid
 - No fog: the entire map is drawn; overlays still show agent path and plan
+
+### Suggested live demo flow
+
+1) Show the TUI/GUI
+	- `python -m src.main --gui`
+	- Pick a medium braided maze (e.g., 101×101 with braid≈0.1).
+	- Toggle Fog (V) and Metrics (T). Step/pause to show replanning and HUD stats.
+2) Compare algorithms
+	- Run BFS/UCS/A*/Greedy with Fog On. Point out Steps vs Nodes/Runtime differences (DFS is illustrative but not optimal).
+3) Headless metrics sample
+	- `python -m src.main --map maps/demo.csv --algo astar --with-stats --no-fog`
+	- Show printed metrics (Steps, Replans, Nodes, Cost, Runtime).
+4) Scaling snapshot (optional)
+	- Run a small sweep with scripts/bench.py and paste a quick chart from the CSV into docs.
 
 Dev quickstart (Linux/macOS)
 - Setup virtual environment and install deps:

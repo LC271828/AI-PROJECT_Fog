@@ -52,6 +52,16 @@ Flags:
 - `--seed`: RNG seed for reproducibility
 - `--out`: output CSV path (defaults to maps/maze_<WxH>_bXX.csv)
 
+- `bench.py` — Generate mazes across sizes and benchmark algorithms (CSV output). Examples:
+
+```powershell
+# 51..151, step 50, 3 seeds, braid 0.10
+python scripts/bench.py --min 51 --max 151 --step 50 --seeds 3 --braid 0.10 --out reports/bench.csv
+
+# Subset of algos, only no-fog
+python scripts/bench.py --algos bfs astar greedy --modes no-fog --min 51 --max 151 --step 50 --seeds 2 -o reports/bench_subset.csv
+```
+
 Notes for Linux users
 - You don’t need the Windows PowerShell scripts; use `setup.sh` and `test.sh` above.
 - If you prefer PowerShell, install PowerShell Core (`pwsh`) and invoke `.ps1` files with `pwsh -File`.
