@@ -52,14 +52,14 @@ Flags:
 - `--seed`: RNG seed for reproducibility
 - `--out`: output CSV path (defaults to maps/maze_<WxH>_bXX.csv)
 
-- `bench.py` — Generate mazes across sizes and benchmark algorithms (CSV output). Examples:
+- `bench.py` — Generate mazes across sizes and benchmark algorithms (CSV output). Run as a module from the repo root. Examples:
 
 ```powershell
 # 51..151, step 50, 3 seeds, braid 0.10
-python scripts/bench.py --min 51 --max 151 --step 50 --seeds 3 --braid 0.10 --out reports/bench.csv
+python -m scripts.bench --min 51 --max 151 --step 50 --seeds 3 --braid 0.10 --out reports/bench.csv
 
 # Subset of algos, only no-fog
-python scripts/bench.py --algos bfs astar greedy --modes no-fog --min 51 --max 151 --step 50 --seeds 2 -o reports/bench_subset.csv
+python -m scripts.bench --algos bfs astar greedy --modes no-fog --min 51 --max 151 --step 50 --seeds 2 -o reports/bench_subset.csv
 ```
 
 Notes for Linux users

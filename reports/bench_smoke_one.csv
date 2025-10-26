@@ -1,0 +1,2 @@
+width,height,algo,mode,seed,braid,reached,steps,cost,replans,nodes,runtime_sec
+51,51,bfs,fog,0,0.1,True,846,846,778,317669,1.168837547302246

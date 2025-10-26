@@ -128,24 +128,29 @@ def main(argv: list[str] | None = None) -> int:
 			for seed in range(args.seeds):
 				for mode in args.modes:
 					for algo in args.algos:
-						try:
-							row = run_trial(width, height, algo, mode, seed, braid=max(0.0, min(1.0, args.braid)))
-						except Exception as e:
-							row = {
-								"width": width,
-								"height": height,
-								"algo": algo,
-								"mode": mode,
-								"seed": seed,
-								"braid": args.braid,
-								"reached": False,
-								"steps": -1,
-								"cost": -1,
-								"replans": -1,
-								"nodes": -1,
-								"runtime_sec": -1.0,
-							}
-						writer.writerow(row)
+							try:
+								row = run_trial(width, height, algo, mode, seed, braid=max(0.0, min(1.0, args.braid)))
+							except Exception as e:
+								# Print the exception to stderr to help diagnose failures while still
+								# recording a placeholder row in the CSV. This keeps batch runs going.
+								import traceback, sys
+								print(f"[bench] Trial failed for n={n} seed={seed} mode={mode} algo={algo}: {e}", file=sys.stderr)
+								traceback.print_exc()
+								row = {
+									"width": width,
+									"height": height,
+									"algo": algo,
+									"mode": mode,
+									"seed": seed,
+									"braid": args.braid,
+									"reached": False,
+									"steps": -1,
+									"cost": -1,
+									"replans": -1,
+									"nodes": -1,
+									"runtime_sec": -1.0,
+								}
+							writer.writerow(row)
 
 	print(f"Wrote benchmark CSV to {out_path}")
 	return 0

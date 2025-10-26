@@ -77,10 +77,10 @@ Quick examples (Windows PowerShell):
 
 ```powershell
 # Sweep sizes 51..151 (step 50), 3 seeds, braid 0.10, both modes; write CSV
-python scripts/bench.py --min 51 --max 151 --step 50 --seeds 3 --braid 0.10 --out reports/bench.csv
+python -m scripts.bench --min 51 --max 151 --step 50 --seeds 3 --braid 0.10 --out reports/bench.csv
 
 # Subset of algos, only no-fog, 2 seeds
-python scripts/bench.py --algos bfs astar greedy --modes no-fog --min 51 --max 151 --step 50 --seeds 2 -o reports/bench_subset.csv
+python -m scripts.bench --algos bfs astar greedy --modes no-fog --min 51 --max 151 --step 50 --seeds 2 -o reports/bench_subset.csv
 ```
 
 Columns in CSV
@@ -106,7 +106,7 @@ Tips
 - Alternatively, you can run them directly: `python examples/demo_grid.py`.
 
 <!-- CHANGE: Moved the WithGUI setup command from the Demos tips section up into
-     Dev quickstart (Windows) under the Optional GUI bullet to avoid confusion. -->
+	Dev quickstart (Windows) under the Optional GUI bullet to avoid confusion. -->
 
 ## Headless CLI
 
