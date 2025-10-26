@@ -7,3 +7,6 @@ rich>=13.0.0,<14.0.0
 
 # GUI (optional): install via scripts/setup.ps1 -WithGUI
 # pygame==2.6.1
+
+# Plotting (optional but recommended for benchmarks)
+matplotlib>=3.7,<4.0
