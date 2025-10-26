@@ -7,7 +7,7 @@ Core modules
 - [x] src/search.py: bfs_neighbors/dfs_neighbors/ucs_neighbors/astar_neighbors, reconstruct, ALGORITHMS_NEIGHBORS, with-stats wrappers
 - [x] src/agent.py: Metrics dataclass, OnlineAgent with step()/run(), basic frontier exploration
 - [x] src/main.py: CLI wiring (load_config, parse args, run headless; --with-stats supported)
-- [ ] src/visualize.py (optional): pygame renderer and loop
+ - [x] src/visualize.py (optional): pygame renderer and loop
 
 Maps
 - [x] Add small edge-case maps for testing (boxed_start, corridors, dead_end_maze, open_room)
@@ -21,8 +21,8 @@ Tests
 - [x] Rich summary plugin and per-test banners for informative output
 
 Docs
-- [ ] docs/assignment_summary.md: Fill in project summary
-- [ ] docs/whatsapp_digest.md: Summarize decisions and roles from chat
+- [x] docs/assignment_summary.md: Fill in project summary
+- [x] docs/whatsapp_digest.md: Summarize decisions and roles from chat
 - [x] docs/decisions.md: Record design choices as they solidify (kept up-to-date)
 - [x] docs/PEAS.md: Added PEAS summary
 - [x] TEAM_API.md and README.md: aligned with current API
@@ -32,4 +32,4 @@ Tooling
 - [ ] .vscode/settings.json: enable pytest discovery (optional)
 
 Nice-to-have
-- [ ] scripts/bench.py: benchmark harness once core modules exist
+- [x] scripts/bench.py: benchmark harness once core modules exist

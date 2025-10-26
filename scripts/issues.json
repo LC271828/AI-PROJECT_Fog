@@ -95,9 +95,9 @@
       "title": "Map curation and additional demos",
       "labels": ["data", "enhancement"],
       "assignees": ["Raffolklore"],
-      "state": "open",
+      "state": "closed",
       "comments": [
-        "Status update: maps/demo2.csv exists; multiple additional maps are present (e.g., corridor_*, dead_end_maze.csv, maze_101x101_*). Remaining: add demo3.csv and update maps/README.md notes."
+        "Various maps with different structures to test agent behavior."
       ],
       "body": "Add more CSV maps with varied patterns:\n- Narrow corridors, cul-de-sacs, simple open map\n\nAcceptance criteria:\n- New maps validate with Grid.from_csv\n\nTasks:\n- [ ] Create maps/demo2.csv and maps/demo3.csv\n- [ ] Update maps/README.md with notes"
     }
