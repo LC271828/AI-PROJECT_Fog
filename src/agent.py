@@ -348,7 +348,8 @@ class OnlineAgent:
 		return True
 
 	def run(self, max_steps: int = 10000) -> Metrics:
-		start_time = time.time()
+		# Use high-resolution timer to capture short runs accurately
+		start_time = time.perf_counter()
 		steps = 0
 		while steps < max_steps:
 			cont = self.step()
@@ -362,9 +363,11 @@ class OnlineAgent:
 		# CHANGE(METRICS): Provide a simple cost based on the taken path length on unit-cost maps.
 		if self.metrics.path_taken:
 			self.metrics.cost = max(0, len(self.metrics.path_taken) - 1)
-		# CHANGE(METRICS): If no per-search runtime was accumulated, set total runtime.
-		if not self.metrics.runtime:
-			self.metrics.runtime = max(0.0, time.time() - start_time)
+		# CHANGE(METRICS): Ensure runtime reflects at least the total wall-clock run time.
+		# We take the max of accumulated search time and total elapsed time so that
+		# tiny maps still report a nonzero duration and larger runs include planning time.
+		total = max(0.0, time.perf_counter() - start_time)
+		self.metrics.runtime = max(float(self.metrics.runtime or 0.0), total)
 		return self.metrics
 
 

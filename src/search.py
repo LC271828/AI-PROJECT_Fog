@@ -193,9 +193,10 @@ def _with_stats(search_func, start, goal, neighbors_fn, **kwargs):
         count["n"] += 1
         return neighbors_fn(pos)
 
-    t0 = time.time()
+    # Use high-resolution timer for sub-millisecond accuracy
+    t0 = time.perf_counter()
     path = search_func(start, goal, counted_neighbors, **kwargs)
-    runtime = time.time() - t0
+    runtime = time.perf_counter() - t0
     # More readable than a conditional expression
     if path:
         cost = max(0, len(path) - 1)
