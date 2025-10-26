@@ -84,7 +84,7 @@ def _require_pygame():
 		) from e
 
 
-def draw_frame(screen: Any, grid: Grid, agent: OnlineAgent, cell_size: int = 24, show_grid: bool = True):
+def draw_frame(screen: Any, grid: Grid, agent: Any, cell_size: int = 24, show_grid: bool = True):
 		"""Draw a single frame onto an existing pygame screen.
 
 		Contract
@@ -111,9 +111,14 @@ def draw_frame(screen: Any, grid: Grid, agent: OnlineAgent, cell_size: int = 24,
 		rows = getattr(grid, "height", None)
 		cols = getattr(grid, "width", None)
 		if rows is None or cols is None:
-			# try fallback to grid dimensions
-			rows = len(getattr(grid, "grid", []))
-			cols = len(getattr(grid, "grid", [])[0]) if rows else 0
+			# Try fallback to grid dimensions
+			grid_rows = getattr(grid, "grid", [])
+			rows = len(grid_rows)
+			if rows:
+				first_row = grid_rows[0]
+				cols = len(first_row)
+			else:
+				cols = 0
 
 		# Whether fog is disabled (agent has full map)
 		no_fog = bool(getattr(agent, "full_map", False))
@@ -126,8 +131,10 @@ def draw_frame(screen: Any, grid: Grid, agent: OnlineAgent, cell_size: int = 24,
 				rect = pygame.Rect(x, y, cell_size, cell_size)
 
 				# Fog handling: in no-fog mode treat all tiles as visible
-				visible = True if no_fog else False
-				if not no_fog:
+				visible = False
+				if no_fog:
+					visible = True
+				else:
 					try:
 						visible = bool(grid.is_visible(r, c))
 					except Exception:
@@ -207,7 +214,7 @@ def draw_frame(screen: Any, grid: Grid, agent: OnlineAgent, cell_size: int = 24,
 		return
 
 
-def visualize(agent: OnlineAgent, grid: Grid, cell_size: int = 24, fps: int = 10):
+def visualize(agent: Any, grid: Grid, cell_size: int = 24, fps: int = 10):
 		"""Minimal pygame visualization loop.
 
 		Parameters
@@ -237,8 +244,13 @@ def visualize(agent: OnlineAgent, grid: Grid, cell_size: int = 24, fps: int = 10
 		rows = getattr(grid, "height", None)
 		cols = getattr(grid, "width", None)
 		if rows is None or cols is None:
-			rows = len(getattr(grid, "grid", []))
-			cols = len(getattr(grid, "grid", [])[0]) if rows else 0
+			grid_rows = getattr(grid, "grid", [])
+			rows = len(grid_rows)
+			if rows:
+				first_row = grid_rows[0]
+				cols = len(first_row)
+			else:
+				cols = 0
 
 		# Fixed window dimensions
 		WINDOW_WIDTH = 1280
@@ -382,13 +394,21 @@ def visualize(agent: OnlineAgent, grid: Grid, cell_size: int = 24, fps: int = 10
 
 				# Live metrics (robust to missing fields)
 				m = getattr(agent, "metrics", None)
-				steps = getattr(m, "steps", 0) if m is not None else 0
-				replans = getattr(m, "replans", 0) if m is not None else 0
-				nodes = getattr(m, "nodes_expanded", 0) if m is not None else 0
-				# Display a live cumulative cost based on path length to avoid depending on the last search plan cost
-				path_len = len(getattr(m, "path_taken", []) or []) if m is not None else 0
+				if m is not None:
+					steps = getattr(m, "steps", 0)
+					replans = getattr(m, "replans", 0)
+					nodes = getattr(m, "nodes_expanded", 0)
+					# Display a live cumulative cost based on path length to avoid depending on the last search plan cost
+					path_taken_seq = getattr(m, "path_taken", []) or []
+					path_len = len(path_taken_seq)
+					runtime = getattr(m, "runtime", 0.0)
+				else:
+					steps = 0
+					replans = 0
+					nodes = 0
+					path_len = 0
+					runtime = 0.0
 				cost = max(0, path_len - 1)
-				runtime = getattr(m, "runtime", 0.0) if m is not None else 0.0
 
 				# Top stats in three columns (multiple lines supported by taller STATS_HEIGHT)
 				# Left column: map/algo/fog
@@ -604,7 +624,10 @@ def run_menu():
 						print(f"Failed to load map {selected_map}: {e}")
 						continue
 					# choose function from core maps (greedy included)
-					search_fn = (merged_stats if with_stats else merged_plain).get(selected_algo)
+					if with_stats:
+						search_fn = merged_stats.get(selected_algo)
+					else:
+						search_fn = merged_plain.get(selected_algo)
 					# full_map is inverse of fog_enabled
 					agent = OnlineAgent(grid, full_map=(not fog_enabled), search_algo=search_fn)
 					# annotate agent with algorithm name for HUD
@@ -626,7 +649,10 @@ def run_menu():
 		y = maps_y
 		for i, name in enumerate(map_names):
 			if i == map_idx:
-				col = HIGHLIGHT if focus == 0 else (220, 220, 160)
+				if focus == 0:
+					col = HIGHLIGHT
+				else:
+					col = (220, 220, 160)
 			else:
 				col = TEXT_COLOR
 			s = font.render(name, True, col)
@@ -641,7 +667,10 @@ def run_menu():
 		y = algos_y
 		for i, name in enumerate(algos):
 			if i == algo_idx:
-				col = HIGHLIGHT if focus == 1 else (220, 220, 160)
+				if focus == 1:
+					col = HIGHLIGHT
+				else:
+					col = (220, 220, 160)
 			else:
 				col = TEXT_COLOR
 			s = font.render(name, True, col)
@@ -649,11 +678,19 @@ def run_menu():
 			y += 26
 
 		# instructions + FPS hint
-		instr_fog = font.render(f"Fog: {'On' if fog_enabled else 'Off'}  (V to toggle)", True, (150, 150, 150))
+		if fog_enabled:
+			fog_state = "On"
+		else:
+			fog_state = "Off"
+		instr_fog = font.render(f"Fog: {fog_state}  (V to toggle)", True, (150, 150, 150))
 		screen.blit(instr_fog, (20, WINDOW_HEIGHT - 70))
 		instr1 = font.render("Up/Down: select  Tab: switch column  Enter: run  Esc: quit", True, (150, 150, 150))
 		screen.blit(instr1, (20, WINDOW_HEIGHT - 50))
-		instr2 = font.render(f"FPS: {fps_init}  (+/- to change, F to type)   Metrics: {'On' if with_stats else 'Off'} (T)", True, (150, 150, 150))
+		if with_stats:
+			metrics_state = "On"
+		else:
+			metrics_state = "Off"
+		instr2 = font.render(f"FPS: {fps_init}  (+/- to change, F to type)   Metrics: {metrics_state} (T)", True, (150, 150, 150))
 		screen.blit(instr2, (20, WINDOW_HEIGHT - 30))
 
 		# Draw inline FPS editor overlay if active

@@ -110,7 +110,15 @@ def main(argv: list[str] | None = None) -> int:
 	# Resolve fog vs full_map
 	# If --no-fog given => full_map=True
 	# Else if --fog flag given OR config fog_radius>0 => fog enabled => full_map=False
-	cfg_fog_radius = int(cfg.get("fog_radius", 1)) if isinstance(cfg.get("fog_radius", 1), (int, float, str)) else 1
+	# Resolve fog radius from config in a readable way (accept int/float/str values)
+	_cfg_val = cfg.get("fog_radius", 1)
+	if isinstance(_cfg_val, (int, float, str)):
+		try:
+			cfg_fog_radius = int(_cfg_val)
+		except Exception:
+			cfg_fog_radius = 1
+	else:
+		cfg_fog_radius = 1
 	fog_enabled = False
 	if args.no_fog:
 		fog_enabled = False

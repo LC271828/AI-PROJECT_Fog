@@ -158,9 +158,9 @@ class OnlineAgent:
     def plan_to(self, target: Coord) -> List[Coord]:
         # prefer impl.get_visible_neighbors when available (TEAM_API)
         if hasattr(self.impl, "get_visible_neighbors"):
-            neighbor_fn = lambda p: self.impl.get_visible_neighbors(p)
+            neighbor_fn = self._neighbors_visible
         else:
-            neighbor_fn = lambda p: self.known_neighbors(p)
+            neighbor_fn = self.known_neighbors
 
         res = self.search(self.current, target, neighbor_fn)
         # Search may return either a Path or a SearchResult-like object with .path
@@ -173,6 +173,10 @@ class OnlineAgent:
         else:
             path = res_any
         return path
+
+    def _neighbors_visible(self, pos: Coord):
+        """Neighbor function under fog (visible and passable)."""
+        return list(self.impl.get_visible_neighbors(pos))
 
     def choose_frontier(self) -> Coord | None:
         """Return the nearest known passable cell that has at least one unknown neighbor.

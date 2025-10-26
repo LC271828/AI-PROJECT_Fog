@@ -38,7 +38,10 @@ def _prompt_yes_no(prompt: str, default_yes: bool = True) -> bool:
 
     Returns True for yes, False for no. Empty input picks the default.
     """
-    d = "Y/n" if default_yes else "y/N"
+    if default_yes:
+        d = "Y/n"
+    else:
+        d = "y/N"
     raw = input(f"{prompt} ({d}): ").strip().lower()
     if not raw:
         return default_yes
@@ -104,7 +107,11 @@ def run_interactive() -> int:
 
     algos = sorted(list(SEARCH_ALGOS.keys())) or ["astar"]
     print("Select an algorithm:")
-    ai = _prompt_choice("Algorithm", algos, default_index=algos.index("astar") if "astar" in algos else 0)
+    if "astar" in algos:
+        default_algo_index = algos.index("astar")
+    else:
+        default_algo_index = 0
+    ai = _prompt_choice("Algorithm", algos, default_index=default_algo_index)
     algo_name = algos[ai]
 
     # Run configuration

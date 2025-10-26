@@ -27,7 +27,11 @@ def render_masked(grid: Grid, agent_pos: Optional[Coord] = None, plan: Optional[
     Overlays: agent '@'; plan '*' (excluding current position).
     """
     lines: List[str] = []
-    plan_set = set(plan[1:] if plan else [])  # exclude current position from plan overlay
+    # Exclude current position from plan overlay for readability
+    if plan:
+        plan_set = set(plan[1:])
+    else:
+        plan_set = set()
     for r in range(grid.height):
         row_chars: List[str] = []
         for c in range(grid.width):
@@ -70,7 +74,11 @@ def run_text_session(
         raise FileNotFoundError(f"Map not found: {map_path}")
 
     grid = Grid.from_csv(map_path)
-    search_fn = (SEARCH_ALGOS_WITH_STATS.get(algo_name) if with_stats else SEARCH_ALGOS.get(algo_name))
+    # Choose the search function (stats-enabled variant when requested)
+    if with_stats:
+        search_fn = SEARCH_ALGOS_WITH_STATS.get(algo_name)
+    else:
+        search_fn = SEARCH_ALGOS.get(algo_name)
     if search_fn is None:
         raise ValueError(f"Unknown algorithm '{algo_name}'")
 

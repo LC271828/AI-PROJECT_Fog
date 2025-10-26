@@ -30,7 +30,11 @@ from typing import List, Tuple
 
 
 def _ensure_odd(n: int) -> int:
-    return n if n % 2 == 1 else n + 1
+    """Return an odd integer by adding 1 if ``n`` is even."""
+    if n % 2 == 1:
+        return n
+    else:
+        return n + 1
 
 
 def generate_maze(width: int, height: int, seed: int | None = None, braid: float = 0.0) -> List[List[str]]:
@@ -131,7 +135,11 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     grid = generate_maze(args.width, args.height, seed=args.seed, braid=max(0.0, min(1.0, args.braid)))
-    out = Path(args.out) if args.out else Path("maps") / f"maze_{grid[0].__len__()}x{len(grid)}_b{int(args.braid*100)}.csv"
+    if args.out:
+        out = Path(args.out)
+    else:
+        default_name = f"maze_{grid[0].__len__()}x{len(grid)}_b{int(args.braid*100)}.csv"
+        out = Path("maps") / default_name
     out.parent.mkdir(parents=True, exist_ok=True)
     write_csv(grid, out)
     print(f"Wrote maze to {out}")

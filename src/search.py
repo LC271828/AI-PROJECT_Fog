@@ -181,6 +181,11 @@ class SearchResult:
 
 
 def _with_stats(search_func, start, goal, neighbors_fn, **kwargs):
+    """Run ``search_func`` with a counted neighbor function and basic timing.
+
+    Returns a SearchResult with path, nodes_expanded (number of expansions),
+    runtime in seconds, and unit-cost path cost.
+    """
     # Count how many times the algorithm expands a node (calls neighbors_fn)
     count = {"n": 0}
 
@@ -191,7 +196,11 @@ def _with_stats(search_func, start, goal, neighbors_fn, **kwargs):
     t0 = time.time()
     path = search_func(start, goal, counted_neighbors, **kwargs)
     runtime = time.time() - t0
-    cost = max(0, len(path) - 1) if path else 0
+    # More readable than a conditional expression
+    if path:
+        cost = max(0, len(path) - 1)
+    else:
+        cost = 0
     return SearchResult(path=path, nodes_expanded=count["n"], runtime=runtime, cost=cost)
 
 
@@ -220,6 +229,15 @@ ALGORITHMS_NEIGHBORS_WITH_STATS = {
     "dfs": dfs_neighbors_with_stats,
     "ucs": ucs_neighbors_with_stats,
     "astar": astar_neighbors_with_stats,
-    "greedy": lambda start, goal, neighbors_fn: _with_stats(greedy_neighbors, start, goal, neighbors_fn, h=manhattan),
+    "greedy": None,  # filled below with a named function for readability
 }
+
+
+def greedy_neighbors_with_stats(start, goal, neighbors_fn):
+    """Wrapper collecting metrics for Greedy Best-First Search."""
+    return _with_stats(greedy_neighbors, start, goal, neighbors_fn, h=manhattan)
+
+
+# Fill the mapping with the named function instead of a lambda
+ALGORITHMS_NEIGHBORS_WITH_STATS["greedy"] = greedy_neighbors_with_stats
 

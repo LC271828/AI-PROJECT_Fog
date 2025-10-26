@@ -34,10 +34,18 @@ from scripts.maze_gen import generate_maze, write_csv as write_csv_map
 
 
 def _odd(n: int) -> int:
-	return n if n % 2 == 1 else n + 1
+	"""Return an odd integer by adding 1 if ``n`` is even."""
+	if n % 2 == 1:
+		return n
+	else:
+		return n + 1
 
 
 def _sizes(min_n: int, max_n: int, step: int) -> Iterable[int]:
+	"""Yield odd sizes from ``min_n`` to ``max_n`` inclusive, stepping by ``step``.
+
+	Ensures each yielded size is odd by bumping even numbers.
+	"""
 	cur = min_n
 	while cur <= max_n:
 		yield _odd(cur)
@@ -45,6 +53,7 @@ def _sizes(min_n: int, max_n: int, step: int) -> Iterable[int]:
 
 
 def _ensure_parent(path: Path) -> None:
+	"""Create parent directories for ``path`` if they do not exist."""
 	path.parent.mkdir(parents=True, exist_ok=True)
 
 

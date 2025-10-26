@@ -195,13 +195,13 @@ class OnlineAgent:
 		"""
 		# CHANGE(TEAM_API): When full_map is True, use authoritative grid neighbors (no fog).
 		# Otherwise, prefer impl.get_visible_neighbors under fog. Fallback to agent-known.
+		# Choose a readable, named neighbor function instead of inline lambdas
 		if self.full_map and hasattr(self.impl, "neighbors4"):
-			# Only return passable neighbors in full-map mode
-			neighbor_fn = lambda p: [n for n in self.impl.neighbors4(p[0], p[1]) if self.impl.passable(n[0], n[1])]
+			neighbor_fn = self._neighbors_full_map
 		elif hasattr(self.impl, "get_visible_neighbors"):
-			neighbor_fn = lambda p: self.impl.get_visible_neighbors(p)
+			neighbor_fn = self._neighbors_visible
 		else:
-			neighbor_fn = lambda p: self.known_neighbors(p)
+			neighbor_fn = self.known_neighbors
 
 		res = self.search(self.current, target, neighbor_fn)
 		# Search may return either a Path or a SearchResult-like object with .path
@@ -214,6 +214,21 @@ class OnlineAgent:
 		else:
 			path = res_any
 		return path
+
+	def _neighbors_full_map(self, pos: Coord):
+		"""Neighbor function for full-map mode: in-bounds and passable neighbors only.
+
+		Order is Up, Right, Down, Left to keep behavior deterministic.
+		"""
+		neighbors = []
+		for n in self.impl.neighbors4(pos[0], pos[1]):
+			if self.impl.passable(n[0], n[1]):
+				neighbors.append(n)
+		return neighbors
+
+	def _neighbors_visible(self, pos: Coord):
+		"""Neighbor function under fog: defer to Grid.get_visible_neighbors."""
+		return list(self.impl.get_visible_neighbors(pos))
 
 	def choose_frontier(self) -> Coord | None:
 		"""Return the nearest known passable cell that has at least one unknown neighbor.
