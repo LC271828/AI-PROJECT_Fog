@@ -24,9 +24,9 @@ Rules:
 - Large temporary data should live under `experiments/<you>/data/` (git-ignored by default).
 
 ## Branch workflow
-- Branches: `main` (final, protected) and `dev` (integration)
-- Work directly on `dev` (like a shared doc). Keep commits small and focused.
-- Integrator (Leo) merges `dev` → `main` when stable.
+- Default: work directly on `dev` (shared integration). Keep commits small and focused.
+- For a specific bug/feature that's risky or larger, create a short-lived branch from `dev` and open a PR back into `dev`.
+- Only the integrator (Leo) merges `dev` → `main`. The `main` branch is protected.
 
 ## Terminology and assumptions
 - Movement is up/down/left/right only (no diagonals)
